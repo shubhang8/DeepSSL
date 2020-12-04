@@ -23,7 +23,7 @@ DNABert/6-new-12w-0/special_tokens_map.json
 DNABert/6-new-12w-0/tokenizer_config.json
 DNABert/6-new-12w-0/vocab.txt
 
-/DNABert/src/transformers/__pycache__/*
+/DNABert/src/transformers/__pycache__/*.pyc
 
 *.pyc
 
@@ -33,3 +33,51 @@ DNABert/examples/runs/*
 *.pyc
 
 /Users/suzy/Documents/GitHub/DeepSSL/DNABert/src/transformers/data/processors/__pycache__/*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
