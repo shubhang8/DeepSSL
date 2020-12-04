@@ -30,3 +30,4 @@ DNABert/6-new-12w-0/vocab.txt
 DNABert/examples/runs/*
 
 /Users/suzy/Documents/GitHub/DeepSSL/DNABert/src/transformers/__pycache__/*
+*.pyc
