@@ -90,8 +90,14 @@ def glue_convert_examples_to_features(
         if ex_index % 10000 == 0:
             logger.info("Writing example %d/%d" % (ex_index, len_examples))
 
-        inputs = tokenizer.encode_plus(example.text_a, example.text_b, add_special_tokens=True, max_length=max_length,)
-        input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        if output_mode == "multi-classification":
+            inputs = tokenizer.encode_plus(example.text_a, None, add_special_tokens=True, max_length=max_length,)
+            input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        else:
+            inputs = tokenizer.encode_plus(example.text_a, example.text_b, add_special_tokens=True, max_length=max_length,)
+            input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+
+        
 
         # The mask has 1 for real tokens and 0 for padding tokens. Only real
         # tokens are attended to.
@@ -120,6 +126,9 @@ def glue_convert_examples_to_features(
             label = label_map[example.label]
         elif output_mode == "regression":
             label = float(example.label)
+        elif output_mode == "multi-classification":
+            label = label_map[example.label]
+            multi_labels = [label_map[label] for label in example.text_b.split()]
         else:
             raise KeyError(output_mode)
 
@@ -130,10 +139,15 @@ def glue_convert_examples_to_features(
             logger.info("attention_mask: %s" % " ".join([str(x) for x in attention_mask]))
             logger.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
             logger.info("label: %s (id = %d)" % (example.label, label))
-
+            # if isinstance(label, int):
+            #     logger.info("label: %s (id = %d)" % (example.label, label))
+            # else:
+            #     logger.info("label: %s (id = %s)" % (example.label, example.label))
+        print("glue_convert_examples_to_features")
+        print("multi_labels: ",multi_labels)
         features.append(
             InputFeatures(
-                input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, label=label
+                input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, label=label, multi_labels = multi_labels
             )
         )
 
@@ -165,6 +179,31 @@ def glue_convert_examples_to_features(
 
     return features
 
+class DnaDeepSeaProcessor(DataProcessor):
+    """Processor for the DeepSea data"""
+    def get_labels(self):
+        return ["0", "1"] 
+
+    def get_train_examples(self, data_dir):
+        logger.info("LOOKING AT {}".format(os.path.join(data_dir, "train.tsv")))
+        return self._create_examples(self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        return self._create_examples(self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        #ssl Todo: consider the label format?
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, i)
+            text_a = line[0]
+            fake_label = line[1] # single label
+            real_label = line[2] # a list 919 labels
+            examples.append(InputExample(guid=guid, text_a=text_a, text_b=real_label, label=fake_label))
+        return examples
 
 class DnaPromProcessor(DataProcessor):
     """Processor for the DNA promoter data"""
@@ -242,6 +281,8 @@ class DnaPairProcessor(DataProcessor):
             label = line[2]
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
+
+
 
 class MrpcProcessor(DataProcessor):
     """Processor for the MRPC data set (GLUE version)."""
@@ -607,6 +648,7 @@ glue_tasks_num_labels = {
     "dna690":2,
     "dnapair":2,
     "dnasplice":3,
+    "dnadeepsea":2,
 }
 
 glue_processors = {
@@ -624,6 +666,7 @@ glue_processors = {
     "dna690": DnaPromProcessor,
     "dnapair": DnaPairProcessor,
     "dnasplice": DnaSpliceProcessor,
+    "dnadeepsea": DnaDeepSeaProcessor,
 }
 
 glue_output_modes = {
@@ -641,4 +684,5 @@ glue_output_modes = {
     "dna690": "classification",
     "dnapair": "classification",
     "dnasplice": "classification",
+    "dnadeepsea": "multi-classification",
 }
