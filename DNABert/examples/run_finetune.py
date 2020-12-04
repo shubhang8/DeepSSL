@@ -270,7 +270,25 @@ def train(args, train_dataset, model, tokenizer):
                     batch[2] if args.model_type in TOKEN_ID_GROUP else None
                 )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
             outputs = model(**inputs)
+            #ssl: outputs : expect hidden states and attentions when set both indicator to Ture,
+            #output_hidden_states=True, output_attentions=True
+
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+            logits = outputs[1]
+            hidden_states = outputs[2]
+
+            print("outputs length: ",len(outputs))
+            print("loss: ",loss)
+            print("logits shape: ",logits.shape)
+            print("hidden state length: ",len(hidden_states))
+            for i in range(len(hidden_states)):
+                print("hidden state[",i,"] : ",hidden_states[i].shape)
+            #compare
+            # for i in range(len(hidden_states)):
+            #     for j in range(len(hidden_states)):
+            #         if torch.all(torch.eq(hidden_states[i], hidden_states[j])):
+            #             print(i,j,"are equal")
+
 
             if args.n_gpu > 1:
                 loss = loss.mean()  # mean() to average on multi-gpu parallel training
@@ -776,6 +794,8 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
+    elif output_mode == "multi-classification":
+        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
 
     dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
     return dataset
@@ -886,13 +906,13 @@ def main():
     )
 
     parser.add_argument(
-        "--per_gpu_train_batch_size", default=8, type=int, help="Batch size per GPU/CPU for training.",
+        "--per_gpu_train_batch_size", default=1, type=int, help="Batch size per GPU/CPU for training.",
     )
     parser.add_argument(
-        "--per_gpu_eval_batch_size", default=8, type=int, help="Batch size per GPU/CPU for evaluation.",
+        "--per_gpu_eval_batch_size", default=1, type=int, help="Batch size per GPU/CPU for evaluation.",
     )
     parser.add_argument(
-        "--per_gpu_pred_batch_size", default=8, type=int, help="Batch size per GPU/CPU for prediction.",
+        "--per_gpu_pred_batch_size", default=1, type=int, help="Batch size per GPU/CPU for prediction.",
     )
     parser.add_argument(
         "--early_stop", default=0, type=int, help="set this to a positive integet if you want to perfrom early stop. The model will stop \
@@ -1069,6 +1089,7 @@ def main():
         config.num_rnn_layer = args.num_rnn_layer
         config.rnn_dropout = args.rnn_dropout
         config.rnn_hidden = args.rnn_hidden
+        config.output_hidden_states=True
 
         tokenizer = tokenizer_class.from_pretrained(
             args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
