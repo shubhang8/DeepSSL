@@ -31,3 +31,5 @@ DNABert/examples/runs/*
 
 /Users/suzy/Documents/GitHub/DeepSSL/DNABert/src/transformers/__pycache__/*
 *.pyc
+
+/Users/suzy/Documents/GitHub/DeepSSL/DNABert/src/transformers/data/processors/__pycache__/*
