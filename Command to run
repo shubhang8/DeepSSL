@@ -28,3 +28,4 @@ python run_finetune.py \
     --overwrite_output \
     --weight_decay 0.01 \
     --n_process 1
+    --deepSeaClassifer kmer

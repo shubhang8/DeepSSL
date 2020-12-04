@@ -34,6 +34,8 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Tenso
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
+from conv import KmerClassifer,ClsClassifer
+
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
@@ -156,7 +158,7 @@ def _rotate_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
         logger.info("Deleting older checkpoint [{}] due to args.save_total_limit".format(checkpoint))
         shutil.rmtree(checkpoint)
 
-def train(args, train_dataset, model, tokenizer):
+def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassifer = None):
     """ Train the model """
     if args.local_rank in [-1, 0]:
         tb_writer = SummaryWriter()
@@ -287,12 +289,30 @@ def train(args, train_dataset, model, tokenizer):
             
             
             last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
-            CLS_hidden_state = last_hidden_state[0]
-            kmer_hidden_state = last_hidden_state[1:]
-            deepsea_labels = batch[4]
+            
+            CLS_hidden_state = last_hidden_state[0] #(batch, hiddens_size)
+            print("CLS_hidden_state shape: ",CLS_hidden_state.shape)
+
+            kmer_hidden_states = last_hidden_state[1:] #(batch_size,seq_size-1,hidden_size)
+            print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
+            
+            deepsea_labels = batch[4] # batch * 919 tensor float
+            
             print("deepsea labels:",deepsea_labels)
 
             #Todo: convolution layers
+
+            #kmer classification
+            if kmerClassifer:
+                kmer_output = kmerClassifer(kmer_hidden_states)
+                print("kmer output: ",kmer_output)
+
+
+        
+            if clsClassifer:
+                cls_output = clsClassifer(CLS_hidden_state)
+                print("cls output: ",cls_output)
+
 
 
             #Todo: classification results 919 features
@@ -907,6 +927,8 @@ def main():
         help="The maximum total input sequence length after tokenization. Sequences longer "
         "than this will be truncated, sequences shorter will be padded.",
     )
+
+
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
     parser.add_argument("--do_predict", action="store_true", help="Whether to do prediction on the given dataset.")
@@ -1011,7 +1033,8 @@ def main():
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
 
-
+    parser.add_argument("--deepSeaClassifer", type=str, default=None, help="Deepsea classification")
+    
     args = parser.parse_args()
 
     if args.should_continue:
@@ -1071,6 +1094,14 @@ def main():
     # Set seed
     set_seed(args)
 
+    #define classifer for kmer and cls
+    kmerClassifer = None
+    clsClassifer = None
+    if args.deepSeaClassifer == "kmer":
+        kmerClassifer = KmerClassifer()
+    if args.deepSeaClassifer == "cls":
+        clsClassifer = ClsClassifer()
+
     # Prepare GLUE task
     args.task_name = args.task_name.lower()
     if args.task_name not in processors:
@@ -1118,6 +1149,9 @@ def main():
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
 
+        
+
+
         if args.local_rank == 0:
             torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
 
@@ -1128,7 +1162,7 @@ def main():
     # Training
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-        global_step, tr_loss = train(args, train_dataset, model, tokenizer)
+        global_step, tr_loss = train(args, train_dataset, model, tokenizer , kmerClassifer, clsClassifer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
