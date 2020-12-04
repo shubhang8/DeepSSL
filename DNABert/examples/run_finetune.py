@@ -265,6 +265,7 @@ def train(args, train_dataset, model, tokenizer):
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
             inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            
             if args.model_type != "distilbert":
                 inputs["token_type_ids"] = (
                     batch[2] if args.model_type in TOKEN_ID_GROUP else None
@@ -277,17 +278,28 @@ def train(args, train_dataset, model, tokenizer):
             logits = outputs[1]
             hidden_states = outputs[2]
 
-            print("outputs length: ",len(outputs))
-            print("loss: ",loss)
-            print("logits shape: ",logits.shape)
-            print("hidden state length: ",len(hidden_states))
-            for i in range(len(hidden_states)):
-                print("hidden state[",i,"] : ",hidden_states[i].shape)
-            #compare
+            # print("outputs length: ",len(outputs))
+            # print("loss: ",loss)
+            # print("logits shape: ",logits.shape)
+            # print("hidden state length: ",len(hidden_states))
             # for i in range(len(hidden_states)):
-            #     for j in range(len(hidden_states)):
-            #         if torch.all(torch.eq(hidden_states[i], hidden_states[j])):
-            #             print(i,j,"are equal")
+            #     print("hidden state[",i,"] : ",hidden_states[i].shape)
+            
+            
+            last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
+            CLS_hidden_state = last_hidden_state[0]
+            kmer_hidden_state = last_hidden_state[1:]
+            deepsea_labels = batch[4]
+            print("deepsea labels:",deepsea_labels)
+
+            #Todo: convolution layers
+
+
+            #Todo: classification results 919 features
+
+            #Todo: loss
+
+
 
 
             if args.n_gpu > 1:
@@ -447,7 +459,7 @@ def evaluate(args, model, tokenizer, prefix="", evaluate=True):
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
         eval_loss = eval_loss / nb_eval_steps
-        if args.output_mode == "classification":
+        if args.output_mode == "classification" or args.output_mode == "multi-classification":
             if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
                 if args.do_ensemble_pred:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
@@ -541,7 +553,7 @@ def predict(args, model, tokenizer, prefix=""):
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
-        if args.output_mode == "classification":
+        if args.output_mode == "classification" or args.output_mode == multi-classification:
             if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
                 if args.do_ensemble_pred:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
@@ -790,14 +802,17 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
+    # print("here!!!!!!!!!!!!!!!!")
+    # print(features[0])
     if output_mode == "classification":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
     elif output_mode == "multi-classification":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
+        real_labels = torch.tensor([f.multi_labels for f in features], dtype=torch.long)
 
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, real_labels)
     return dataset
 
 

@@ -90,8 +90,14 @@ def glue_convert_examples_to_features(
         if ex_index % 10000 == 0:
             logger.info("Writing example %d/%d" % (ex_index, len_examples))
 
-        inputs = tokenizer.encode_plus(example.text_a, example.text_b, add_special_tokens=True, max_length=max_length,)
-        input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        if output_mode == "multi-classification":
+            inputs = tokenizer.encode_plus(example.text_a, None, add_special_tokens=True, max_length=max_length,)
+            input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        else:
+            inputs = tokenizer.encode_plus(example.text_a, example.text_b, add_special_tokens=True, max_length=max_length,)
+            input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+
+        
 
         # The mask has 1 for real tokens and 0 for padding tokens. Only real
         # tokens are attended to.
@@ -120,8 +126,9 @@ def glue_convert_examples_to_features(
             label = label_map[example.label]
         elif output_mode == "regression":
             label = float(example.label)
-        # elif output_mode == "classification":
-        #     label = [label_map[label] for label in example.label.split()]
+        elif output_mode == "multi-classification":
+            label = label_map[example.label]
+            multi_labels = [label_map[label] for label in example.text_b.split()]
         else:
             raise KeyError(output_mode)
 
@@ -136,10 +143,11 @@ def glue_convert_examples_to_features(
             #     logger.info("label: %s (id = %d)" % (example.label, label))
             # else:
             #     logger.info("label: %s (id = %s)" % (example.label, example.label))
-
+        print("glue_convert_examples_to_features")
+        print("multi_labels: ",multi_labels)
         features.append(
             InputFeatures(
-                input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, label=label
+                input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, label=label, multi_labels = multi_labels
             )
         )
 
@@ -192,8 +200,9 @@ class DnaDeepSeaProcessor(DataProcessor):
                 continue
             guid = "%s-%s" % (set_type, i)
             text_a = line[0]
-            label = line[1]
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+            fake_label = line[1] # single label
+            real_label = line[2] # a list 919 labels
+            examples.append(InputExample(guid=guid, text_a=text_a, text_b=real_label, label=fake_label))
         return examples
 
 class DnaPromProcessor(DataProcessor):
@@ -675,5 +684,5 @@ glue_output_modes = {
     "dna690": "classification",
     "dnapair": "classification",
     "dnasplice": "classification",
-    "dnadeepsea": "classification",
+    "dnadeepsea": "multi-classification",
 }

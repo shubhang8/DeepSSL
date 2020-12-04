@@ -71,11 +71,12 @@ class InputFeatures(object):
         label: Label corresponding to the input
     """
 
-    def __init__(self, input_ids, attention_mask=None, token_type_ids=None, label=None):
+    def __init__(self, input_ids, attention_mask=None, token_type_ids=None, label=None, multi_labels = None):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
         self.token_type_ids = token_type_ids
         self.label = label
+        self.multi_labels = multi_labels
 
     def __repr__(self):
         return str(self.to_json_string())
