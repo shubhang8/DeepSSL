@@ -23,8 +23,11 @@ DNABert/6-new-12w-0/special_tokens_map.json
 DNABert/6-new-12w-0/tokenizer_config.json
 DNABert/6-new-12w-0/vocab.txt
 
-DNABert/src/transformers/__pycache__/*pyc
-/Users/suzy/Documents/GitHub/DeepSSL/DNABert/src/transformers/__pycache__/__init__.cpython-36.pyc
+DNABert/src/transformers/__pycache__/
+
+**/__pycache__
+
+DNABert/src/transformers/__pycache__/__init__.cpython-36.pyc
 
 *.pyc
 
