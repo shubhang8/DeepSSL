@@ -26,3 +26,7 @@ DNABert/6-new-12w-0/vocab.txt
 /DNABert/src/transformers/__pycache__/*
 
 *.pyc
+
+DNABert/examples/runs/*
+
+*/__pycache__/*
