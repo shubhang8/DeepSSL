@@ -2,6 +2,9 @@
 * Enviroment requirements:
 python=3.6
 
+# data
+
+http://deepsea.princeton.edu/media/code/deepsea_train_bundle.v0.9.tar.gz
 
 # Step to setup DNABert
 
