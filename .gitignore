@@ -23,7 +23,7 @@ DNABert/6-new-12w-0/special_tokens_map.json
 DNABert/6-new-12w-0/tokenizer_config.json
 DNABert/6-new-12w-0/vocab.txt
 
-/DNABert/src/transformers/__pycache__/*.pyc
+DNABert/src/transformers/__pycache__/*pyc
 
 *.pyc
 
