@@ -91,7 +91,7 @@ np.savetxt('test_4.gz', test_kmers, fmt='%s', delimiter='\t')
 
 print("starting training 4-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_4.gz', train_kmers, fmt='%s', delimiter='\t')k = 3
+np.savetxt('train_4.gz', train_kmers, fmt='%s', delimiter='\t')
 
 k = 5
 print("k = 5")
@@ -106,7 +106,7 @@ np.savetxt('test_5.gz', test_kmers, fmt='%s', delimiter='\t')
 
 print("starting training 5-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_5.gz', train_kmers, fmt='%s', delimiter='\t')k = 3
+np.savetxt('train_5.gz', train_kmers, fmt='%s', delimiter='\t')
 
 k = 6
 print("k = 6")
