@@ -255,6 +255,8 @@ def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassife
     last_auc = 0
     stop_count = 0
 
+    loss = nn.BCEWithLogitsLoss() 
+
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
@@ -303,112 +305,122 @@ def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassife
             #Todo: convolution layers
 
             #kmer classification
-            if kmerClassifer:
-                kmer_output = kmerClassifer(kmer_hidden_states)
-                print("kmer output: ",kmer_output)
+
+            if args.task_name == "dnadeepsea":
+
+                if kmerClassifer:
+                    kmer_output = kmerClassifer(kmer_hidden_states)
+                    print("kmer output: ",kmer_output)
+                    l = loss(sig, torch.tensor(labels))
+                    print("loss: ",l)
+                    model.optimizer.zero_grad()
+                    l.backward()
+                    model.optimizer.step()
 
 
-        
-            if clsClassifer:
-                cls_output = clsClassifer(CLS_hidden_state)
-                print("cls output: ",cls_output)
-
+                if clsClassifer:
+                    cls_output = clsClassifer(CLS_hidden_state)
+                    print("cls output: ",cls_output)
+                    l = loss(sig, torch.tensor(labels))
+                    model.optimizer.zero_grad()
+                    l.backward()
+                    model.optimizer.step()
 
 
             #Todo: classification results 919 features
 
             #Todo: loss
+            
 
 
-
-
-            if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
-            if args.gradient_accumulation_steps > 1:
-                loss = loss / args.gradient_accumulation_steps
-
-            if args.fp16:
-                with amp.scale_loss(loss, optimizer) as scaled_loss:
-                    scaled_loss.backward()
             else:
-                loss.backward()
+                if args.n_gpu > 1:
+                    loss = loss.mean()  # mean() to average on multi-gpu parallel training
+                if args.gradient_accumulation_steps > 1:
+                    loss = loss / args.gradient_accumulation_steps
 
-            tr_loss += loss.item()
-            if (step + 1) % args.gradient_accumulation_steps == 0:
                 if args.fp16:
-                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
+                    with amp.scale_loss(loss, optimizer) as scaled_loss:
+                        scaled_loss.backward()
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                    loss.backward()
 
-                optimizer.step()
-                scheduler.step()  # Update learning rate schedule
-                model.zero_grad()
-                global_step += 1
+                tr_loss += loss.item()
+                if (step + 1) % args.gradient_accumulation_steps == 0:
+                    if args.fp16:
+                        torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
+                    else:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-                if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
-                    logs = {}
-                    if (
-                        args.local_rank == -1 and args.evaluate_during_training
-                    ):  # Only evaluate when single GPU otherwise metrics may not average well
-                        results = evaluate(args, model, tokenizer)
+                    optimizer.step()
+                    scheduler.step()  # Update learning rate schedule
+                    model.zero_grad()
+                    global_step += 1
 
-
-                        if args.task_name == "dna690":
-                            # record the best auc
-                            if results["auc"] > best_auc:
-                                best_auc = results["auc"]
-
-                        if args.early_stop != 0:
-                            # record current auc to perform early stop
-                            if results["auc"] < last_auc:
-                                stop_count += 1
-                            else:
-                                stop_count = 0
-
-                            last_auc = results["auc"]
-                            
-                            if stop_count == args.early_stop:
-                                logger.info("Early stop")
-                                return global_step, tr_loss / global_step
+                    if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
+                        logs = {}
+                        if (
+                            args.local_rank == -1 and args.evaluate_during_training
+                        ):  # Only evaluate when single GPU otherwise metrics may not average well
+                            results = evaluate(args, model, tokenizer)
 
 
-                        for key, value in results.items():
-                            eval_key = "eval_{}".format(key)
-                            logs[eval_key] = value
+                            if args.task_name == "dna690":
+                                # record the best auc
+                                if results["auc"] > best_auc:
+                                    best_auc = results["auc"]
 
-                    loss_scalar = (tr_loss - logging_loss) / args.logging_steps
-                    learning_rate_scalar = scheduler.get_lr()[0]
-                    logs["learning_rate"] = learning_rate_scalar
-                    logs["loss"] = loss_scalar
-                    logging_loss = tr_loss
+                            if args.early_stop != 0:
+                                # record current auc to perform early stop
+                                if results["auc"] < last_auc:
+                                    stop_count += 1
+                                else:
+                                    stop_count = 0
 
-                    for key, value in logs.items():
-                        tb_writer.add_scalar(key, value, global_step)
-                    print(json.dumps({**logs, **{"step": global_step}}))
+                                last_auc = results["auc"]
+                                
+                                if stop_count == args.early_stop:
+                                    logger.info("Early stop")
+                                    return global_step, tr_loss / global_step
 
-                if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
-                    if args.task_name == "dna690" and results["auc"] < best_auc:
-                        continue
-                    checkpoint_prefix = "checkpoint"
-                    # Save model checkpoint
-                    output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
-                    if not os.path.exists(output_dir):
-                        os.makedirs(output_dir)
-                    model_to_save = (
-                        model.module if hasattr(model, "module") else model
-                    )  # Take care of distributed/parallel training
-                    model_to_save.save_pretrained(output_dir)
-                    tokenizer.save_pretrained(output_dir)
 
-                    logger.info("Saving model checkpoint to %s", output_dir)
+                            for key, value in results.items():
+                                eval_key = "eval_{}".format(key)
+                                logs[eval_key] = value
 
-                    _rotate_checkpoints(args, checkpoint_prefix)
+                        loss_scalar = (tr_loss - logging_loss) / args.logging_steps
+                        learning_rate_scalar = scheduler.get_lr()[0]
+                        logs["learning_rate"] = learning_rate_scalar
+                        logs["loss"] = loss_scalar
+                        logging_loss = tr_loss
 
-                    if args.task_name != "dna690":
-                        torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                        torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                        torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                    logger.info("Saving optimizer and scheduler states to %s", output_dir)
+                        for key, value in logs.items():
+                            tb_writer.add_scalar(key, value, global_step)
+                        print(json.dumps({**logs, **{"step": global_step}}))
+
+                    if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
+                        if args.task_name == "dna690" and results["auc"] < best_auc:
+                            continue
+                        checkpoint_prefix = "checkpoint"
+                        # Save model checkpoint
+                        output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
+                        if not os.path.exists(output_dir):
+                            os.makedirs(output_dir)
+                        model_to_save = (
+                            model.module if hasattr(model, "module") else model
+                        )  # Take care of distributed/parallel training
+                        model_to_save.save_pretrained(output_dir)
+                        tokenizer.save_pretrained(output_dir)
+
+                        logger.info("Saving model checkpoint to %s", output_dir)
+
+                        _rotate_checkpoints(args, checkpoint_prefix)
+
+                        if args.task_name != "dna690":
+                            torch.save(args, os.path.join(output_dir, "training_args.bin"))
+                            torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
+                            torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
+                        logger.info("Saving optimizer and scheduler states to %s", output_dir)
 
             if args.max_steps > 0 and global_step > args.max_steps:
                 epoch_iterator.close()

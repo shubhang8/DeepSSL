@@ -52,9 +52,9 @@ class KmerClassifer(nn.Module):
 
         linear2 = self.linear2(linear1)
 
-        sig = self.sig(linear2)
+        # sig = self.sig(linear2)
 
-        return sig
+        return linear2
 
 class ClsClassifer(nn.Module):
 
