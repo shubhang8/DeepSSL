@@ -19,7 +19,7 @@ class KmerClassifer(nn.Module):
         self.pool = nn.MaxPool1d(4,4)
         self.drop1 = nn.Dropout(0.2)
         self.drop2 = nn.Dropout(0.5)
-        self.linear1 = nn.Linear(50880,925)
+        self.linear1 = nn.Linear(960,925)
         self.linear2 = nn.Linear(925,919)
         self.sig = nn.Sigmoid()
 		#nn.Threshold(0, 1e-06)
@@ -32,6 +32,7 @@ class KmerClassifer(nn.Module):
 
 
     def forward(self, inputs): # similar to call function
+        print("forward")
         inputs = inputs.transpose(1, 2)
         x = self.conv1(inputs)
         x = F.relu(x)
@@ -45,7 +46,8 @@ class KmerClassifer(nn.Module):
 
         #conv2 = conv2.view(-1, 53*960)
         print("conv2 shape: ",conv2.shape)
-        z = self.linear1(conv2)
+        conv2 = conv2.transpose(1, 2)
+        linear1 = self.linear1(conv2)
         #linear1 = F.relu(z)
 
         linear2 = self.linear2(linear1)
