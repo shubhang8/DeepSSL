@@ -143,8 +143,8 @@ def glue_convert_examples_to_features(
             #     logger.info("label: %s (id = %d)" % (example.label, label))
             # else:
             #     logger.info("label: %s (id = %s)" % (example.label, example.label))
-        print("glue_convert_examples_to_features")
-        print("multi_labels: ",multi_labels)
+        #print("glue_convert_examples_to_features")
+        #print("multi_labels: ",multi_labels)
         features.append(
             InputFeatures(
                 input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, label=label, multi_labels = multi_labels

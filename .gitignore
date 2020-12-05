@@ -84,3 +84,4 @@ coverage.xml
 *.log
 *.pot
 .ipynb_checkpoints/preprocess-checkpoint.ipynb
+DNABert/conv.py
