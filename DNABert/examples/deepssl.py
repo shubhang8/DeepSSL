@@ -41,7 +41,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Tenso
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
-from conv import KmerClassifer,ClsClassifer
+from conv import KmerClassifier,ClsClassifier
 
 import torch as torch
 import torch.nn as nn
@@ -169,7 +169,7 @@ def _rotate_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
         logger.info("Deleting older checkpoint [{}] due to args.save_total_limit".format(checkpoint))
         shutil.rmtree(checkpoint)
 
-def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassifer = None):
+def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClassifier = None):
     """ Train the model """
     if args.local_rank in [-1, 0]:
         tb_writer = SummaryWriter()
@@ -241,20 +241,21 @@ def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassife
     logger.info("  Total optimization steps = %d", t_total)
 
     global_step = 0
+    global_step = int(args.model_name_or_path.split("-")[-1].split("/")[0])+1
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
     # Check if continuing training from a checkpoint
-    if os.path.exists(args.model_name_or_path):
-        # set global_step to gobal_step of last saved checkpoint from model path
-        global_step = int(args.model_name_or_path.split("-")[-1].split("/")[0])
-        print("!!!!!!!!!!!!!!global_step:",global_step)
-        epochs_trained = global_step // (len(train_dataloader) // args.gradient_accumulation_steps)
-        steps_trained_in_current_epoch = global_step % (len(train_dataloader) // args.gradient_accumulation_steps)
+    # if os.path.exists(args.model_name_or_path):
+    #     # set global_step to gobal_step of last saved checkpoint from model path
+    #     global_step = int(args.model_name_or_path.split("-")[-1].split("/")[0])
+    #     print("!!!!!!!!!!!!!!global_step:",global_step)
+    #     epochs_trained = global_step // (len(train_dataloader) // args.gradient_accumulation_steps)
+    #     steps_trained_in_current_epoch = global_step % (len(train_dataloader) // args.gradient_accumulation_steps)
 
-        logger.info("  Continuing training from checkpoint, will skip to saved global_step")
-        logger.info("  Continuing training from epoch %d", epochs_trained)
-        logger.info("  Continuing training from global step %d", global_step)
-        logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
+    #     logger.info("  Continuing training from checkpoint, will skip to saved global_step")
+    #     logger.info("  Continuing training from epoch %d", epochs_trained)
+    #     logger.info("  Continuing training from global step %d", global_step)
+    #     logger.info("  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch)
 
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
@@ -281,6 +282,8 @@ def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassife
 
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
+
+            #print("input data shape: ",batch[0].shape)
             inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
             
             if args.model_type != "distilbert":
@@ -294,251 +297,205 @@ def train(args, train_dataset, model, tokenizer,kmerClassifer = None,clsClassife
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
             logits = outputs[1]
             hidden_states = outputs[2]
-
-            # print("outputs length: ",len(outputs))
-            # print("loss: ",loss)
-            # print("logits shape: ",logits.shape)
-            # print("hidden state length: ",len(hidden_states))
-            # for i in range(len(hidden_states)):
-            #     print("hidden state[",i,"] : ",hidden_states[i].shape)
-            
             
             last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
+            # print("last hidden shape: ",last_hidden_state.shape)
             
-            CLS_hidden_state = last_hidden_state[0] #(batch, hiddens_size)
+            # print("hidden_states[0].shape:",hidden_states[0].shape)
+            # print("hidden_states[1].shape:",hidden_states[1].shape)
+            # print("hidden_states[2].shape:",hidden_states[2].shape)
+            # print("hidden_states[-1].shape:",hidden_states[-1].shape)
+            
+
+            CLS_hidden_state = last_hidden_state[:,0,:] #(batch, hiddens_size)
             #print("CLS_hidden_state shape: ",CLS_hidden_state.shape)
 
-            kmer_hidden_states = last_hidden_state[1:] #(batch_size,seq_size-1,hidden_size)
+            kmer_hidden_states = last_hidden_state[:,1:,:] #(batch_size,seq_size-1,hidden_size)
             #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
             
             deepsea_labels = batch[4] # batch * 919 tensor float
 
             #kmer classification
 
-            if args.task_name == "dnadeepsea":
+           
+            if kmerClassifier:
+                kmer_output = kmerClassifier(kmer_hidden_states)
+                l = loss_fn(kmer_output, deepsea_labels.float())
+                #print("loss: ",l)
+                optimizer.zero_grad()
+                l.backward()
+                optimizer.step()
+                accuracy = sum(deepsea_labels.flatten().eq(kmer_output.flatten()))
+                #print("accu: ",accuracy)
 
-                if kmerClassifer:
-                    kmer_output = kmerClassifer(kmer_hidden_states)
-                    l = loss_fn(kmer_output, deepsea_labels.float())
-                    #print("loss: ",l)
-                    optimizer.zero_grad()
-                    l.backward()
-                    optimizer.step()
-                    accuracy = sum(deepsea_labels.flatten().eq(kmer_output.flatten()))
-                    #print("accu: ",accuracy)
+            if clsClassifier:
+                cls_output = clsClassifier(CLS_hidden_state)
+                #print("cls output: ",cls_output)
+                l = loss_fn(cls_output, deepsea_labels.float())
+                optimizer.zero_grad()
+                l.backward()
+                optimizer.step()
+                accuracy = sum(deepsea_labels.eq(cls_output))
+                #print("accu: ",accuracy)
 
-                if clsClassifer:
-                    cls_output = clsClassifer(CLS_hidden_state)
-                    print("cls output: ",cls_output)
-                    l = loss_fn(cls_output, deepsea_labels)
-                    optimizer.zero_grad()
-                    l.backward()
-                    optimizer.step()
-                    accuracy = sum(deepsea_labels.eq(kmer_output))
-                    print("accu: ",accuracy)
+            experiment.log_metric("Loss", l)
+            experiment.log_metric("Accuracy", accuracy)
 
-                experiment.log_metric("Loss", l)
-                experiment.log_metric("Accuracy", accuracy)
+        #save check point model
 
-
-            else:
-                if args.n_gpu > 1:
-                    loss = loss.mean()  # mean() to average on multi-gpu parallel training
-                if args.gradient_accumulation_steps > 1:
-                    loss = loss / args.gradient_accumulation_steps
-
-                if args.fp16:
-                    with amp.scale_loss(loss, optimizer) as scaled_loss:
-                        scaled_loss.backward()
-                else:
-                    loss.backward()
-
-                tr_loss += loss.item()
-                if (step + 1) % args.gradient_accumulation_steps == 0:
-                    if args.fp16:
-                        torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
-                    else:
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-
-                    optimizer.step()
-                    scheduler.step()  # Update learning rate schedule
-                    model.zero_grad()
-                    global_step += 1
-
-                    if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
-                        logs = {}
-                        if (
-                            args.local_rank == -1 and args.evaluate_during_training
-                        ):  # Only evaluate when single GPU otherwise metrics may not average well
-                            results = evaluate(args, model, tokenizer)
+        output_dir = os.path.join(args.output_dir,"checkpoint-{}".format(global_step))
+        global_step+=1
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            model_to_save = (model.module if hasattr(model, "module") else model)  # Take care of distributed/parallel training
+            model_to_save.save_pretrained(output_dir)
+            tokenizer.save_pretrained(output_dir)
+        if kmerClassifier:
+            evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
+        if clsClassifier:
+            evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
+         
 
 
-                            if args.task_name == "dna690":
-                                # record the best auc
-                                if results["auc"] > best_auc:
-                                    best_auc = results["auc"]
 
-                            if args.early_stop != 0:
-                                # record current auc to perform early stop
-                                if results["auc"] < last_auc:
-                                    stop_count += 1
-                                else:
-                                    stop_count = 0
-
-                                last_auc = results["auc"]
-                                
-                                if stop_count == args.early_stop:
-                                    logger.info("Early stop")
-                                    return global_step, tr_loss / global_step
-
-
-                            for key, value in results.items():
-                                eval_key = "eval_{}".format(key)
-                                logs[eval_key] = value
-
-                        loss_scalar = (tr_loss - logging_loss) / args.logging_steps
-                        learning_rate_scalar = scheduler.get_lr()[0]
-                        logs["learning_rate"] = learning_rate_scalar
-                        logs["loss"] = loss_scalar
-                        logging_loss = tr_loss
-
-                        for key, value in logs.items():
-                            tb_writer.add_scalar(key, value, global_step)
-                        print(json.dumps({**logs, **{"step": global_step}}))
-
-                    if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
-                        if args.task_name == "dna690" and results["auc"] < best_auc:
-                            continue
-                        checkpoint_prefix = "checkpoint"
-                        # Save model checkpoint
-                        output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
-                        if not os.path.exists(output_dir):
-                            os.makedirs(output_dir)
-                        model_to_save = (
-                            model.module if hasattr(model, "module") else model
-                        )  # Take care of distributed/parallel training
-                        model_to_save.save_pretrained(output_dir)
-                        tokenizer.save_pretrained(output_dir)
-
-                        logger.info("Saving model checkpoint to %s", output_dir)
-
-                        _rotate_checkpoints(args, checkpoint_prefix)
-
-                        if args.task_name != "dna690":
-                            torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                            torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                            torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                        logger.info("Saving optimizer and scheduler states to %s", output_dir)
-
-            if args.max_steps > 0 and global_step > args.max_steps:
-                epoch_iterator.close()
-                break
-        if args.max_steps > 0 and global_step > args.max_steps:
-            train_iterator.close()
-            break
-
-    if args.local_rank in [-1, 0]:
-        tb_writer.close()
-
-    return global_step, tr_loss / global_step
-
-
-def evaluate(args, model, tokenizer, prefix="", evaluate=True):
+def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None, prefix="", evaluate=True):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
-    eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
-    eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
+    # eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
+    #eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
     if args.task_name[:3] == "dna":
         softmax = torch.nn.Softmax(dim=1)
         
 
     results = {}
-    for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
-        eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, evaluate=evaluate)
+    eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=evaluate)
 
-        if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-            os.makedirs(eval_output_dir)
+    # if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
+    #     os.makedirs(eval_output_dir)
 
-        args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-        # Note that DistributedSampler samples randomly
-        eval_sampler = SequentialSampler(eval_dataset)
-        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
+    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+    # Note that DistributedSampler samples randomly
+    eval_sampler = SequentialSampler(eval_dataset)
+    eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
-        # multi-gpu eval
-        if args.n_gpu > 1 and not isinstance(model, torch.nn.DataParallel):
-            model = torch.nn.DataParallel(model)
+    # multi-gpu eval
+    if args.n_gpu > 1 and not isinstance(model, torch.nn.DataParallel):
+        model = torch.nn.DataParallel(model)
 
-        # Eval!
-        logger.info("***** Running evaluation {} *****".format(prefix))
-        logger.info("  Num examples = %d", len(eval_dataset))
-        logger.info("  Batch size = %d", args.eval_batch_size)
-        eval_loss = 0.0
-        nb_eval_steps = 0
-        preds = None
-        probs = None
-        out_label_ids = None
+    # Eval!
+    logger.info("***** Running evaluation {} *****".format(prefix))
+    logger.info("  Num examples = %d", len(eval_dataset))
+    logger.info("  Batch size = %d", args.eval_batch_size)
+    eval_loss = 0.0
+    nb_eval_steps = 0
+    preds = None
+    probs = None
+    out_label_ids = None
+
+    loss_fn = nn.BCEWithLogitsLoss()
+    
+    for batch in tqdm(eval_dataloader, desc="Evaluating"):
+        model.eval()
+        batch = tuple(t.to(args.device) for t in batch)
+
+        with torch.no_grad():
+            inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+            # if args.model_type != "distilbert":
+            #     inputs["token_type_ids"] = (
+            #         batch[2] if args.model_type in TOKEN_ID_GROUP else None
+            #     )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
+            outputs = model(**inputs)
+            
+            hidden_states = outputs[2]
         
-        for batch in tqdm(eval_dataloader, desc="Evaluating"):
-            model.eval()
-            batch = tuple(t.to(args.device) for t in batch)
+            last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
+            #print("last_hidden_state shape: ",last_hidden_state.shape)
+            CLS_hidden_state = last_hidden_state[:,0,:] #(batch, hiddens_size)
+            #print("CLS_hidden_state shape: ",CLS_hidden_state.shape)
 
-            with torch.no_grad():
-                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
-                if args.model_type != "distilbert":
-                    inputs["token_type_ids"] = (
-                        batch[2] if args.model_type in TOKEN_ID_GROUP else None
-                    )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
-                outputs = model(**inputs)
-                tmp_eval_loss, logits = outputs[:2]
+            kmer_hidden_states = last_hidden_state[:,1:,:]  #(batch_size,seq_size-1,hidden_size)
+            #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
+            deepsea_labels = batch[4] # batch * 919 tensor float
+            
+            if kmerClassifier:
+                output = kmerClassifier(kmer_hidden_states)
+                l = loss_fn(output, deepsea_labels.float())
+                #print("loss: ",l)
+                accuracy = sum(deepsea_labels.flatten().eq(output.flatten()))
 
-                eval_loss += tmp_eval_loss.mean().item()
-            nb_eval_steps += 1
-            if preds is None:
-                preds = logits.detach().cpu().numpy()
-                out_label_ids = inputs["labels"].detach().cpu().numpy()
-            else:
-                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-                out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
-        eval_loss = eval_loss / nb_eval_steps
-        if args.output_mode == "classification" or args.output_mode == "multi-classification":
-            if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
-                if args.do_ensemble_pred:
-                    probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
-                else:
-                    probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
-            elif args.task_name == "dnasplice":
-                probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
-            preds = np.argmax(preds, axis=1)
-        elif args.output_mode == "regression":
-            preds = np.squeeze(preds)
-        if args.do_ensemble_pred:
-            result = compute_metrics(eval_task, preds, out_label_ids, probs[:,1])
-        else:
-            result = compute_metrics(eval_task, preds, out_label_ids, probs)
-        results.update(result)
+            if clsClassifier:
+                output = clsClassifier(CLS_hidden_state)
+                l = loss_fn(output, deepsea_labels.float())
+                #print("loss: ",l)
+                accuracy = sum(deepsea_labels.flatten().eq(output.flatten()))
+
+            # #print("accu: ",accuracy)
+
+            # if clsClassifer:
+            #     cls_output = clsClassifer(CLS_hidden_state)
+            #     print("cls output: ",cls_output)
+            #     l = loss_fn(cls_output, deepsea_labels)
+            #     optimizer.zero_grad()
+            #     print("accu: ",accuracy)
+
+            experiment.log_metric("Loss", l)
+            experiment.log_metric("Accuracy", accuracy)
+
+
+
+                
+
+    #             eval_loss += tmp_eval_loss.mean().item()
+    #         nb_eval_steps += 1
+    #         if preds is None:
+    #             preds = logits.detach().cpu().numpy()
+    #             out_label_ids = inputs["labels"].detach().cpu().numpy()
+    #         else:
+    #             preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+    #             out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
+
+
+
+    #     eval_loss = eval_loss / nb_eval_steps
+    #     if args.output_mode == "classification" or args.output_mode == "multi-classification":
+    #         if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
+    #             if args.do_ensemble_pred:
+    #                 probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
+    #             else:
+    #                 probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
+    #         elif args.task_name == "dnasplice":
+    #             probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
+    #         preds = np.argmax(preds, axis=1)
+    #     elif args.output_mode == "regression":
+    #         preds = np.squeeze(preds)
+    #     if args.do_ensemble_pred:
+    #         result = compute_metrics(eval_task, preds, out_label_ids, probs[:,1])
+    #     else:
+    #         result = compute_metrics(eval_task, preds, out_label_ids, probs)
+    #     results.update(result)
         
-        if args.task_name == "dna690":
-            eval_output_dir = args.result_dir
-            if not os.path.exists(args.result_dir): 
-                os.makedirs(args.result_dir)
-        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
-        with open(output_eval_file, "a") as writer:
+    #     if args.task_name == "dna690":
+    #         eval_output_dir = args.result_dir
+    #         if not os.path.exists(args.result_dir): 
+    #             os.makedirs(args.result_dir)
+    #     output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+    #     with open(output_eval_file, "a") as writer:
 
-            if args.task_name[:3] == "dna":
-                eval_result = args.data_dir.split('/')[-1] + " "
-            else:
-                eval_result = ""
+    #         if args.task_name[:3] == "dna":
+    #             eval_result = args.data_dir.split('/')[-1] + " "
+    #         else:
+    #             eval_result = ""
 
-            logger.info("***** Eval results {} *****".format(prefix))
-            for key in sorted(result.keys()):
-                logger.info("  %s = %s", key, str(result[key]))
-                eval_result = eval_result + str(result[key])[:5] + " "
-            writer.write(eval_result + "\n")
+    #         logger.info("***** Eval results {} *****".format(prefix))
+    #         for key in sorted(result.keys()):
+    #             logger.info("  %s = %s", key, str(result[key]))
+    #             eval_result = eval_result + str(result[key])[:5] + " "
+    #         writer.write(eval_result + "\n")
 
-    if args.do_ensemble_pred:
-        return results, eval_task, preds, out_label_ids, probs
-    else:
-        return results
+    # if args.do_ensemble_pred:
+    #     return results, eval_task, preds, out_label_ids, probs
+    # else:
+    #     return results
 
 
 
@@ -1054,7 +1011,7 @@ def main():
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
 
-    parser.add_argument("--deepSeaClassifer", type=str, default=None, help="Deepsea classification")
+    parser.add_argument("--deepSeaClassifier", type=str, default=None, help="Deepsea classification")
     
     args = parser.parse_args()
 
@@ -1116,12 +1073,12 @@ def main():
     set_seed(args)
 
     #define classifer for kmer and cls
-    kmerClassifer = None
-    clsClassifer = None
-    if args.deepSeaClassifer == "kmer":
-        kmerClassifer = KmerClassifer()
-    if args.deepSeaClassifer == "cls":
-        clsClassifer = ClsClassifer()
+    kmerClassifier = None
+    clsClassifier = None
+    if args.deepSeaClassifier == "kmer":
+        kmerClassifier = KmerClassifier()
+    if args.deepSeaClassifier == "cls":
+        clsClassifier = ClsClassifier()
 
     # Prepare GLUE task
     args.task_name = args.task_name.lower()
@@ -1163,6 +1120,8 @@ def main():
             do_lower_case=args.do_lower_case,
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
+
+        print("tokenizer class: ",type(tokenizer).__name__)
         model = model_class.from_pretrained(
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
@@ -1183,8 +1142,9 @@ def main():
     # Training
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-        global_step, tr_loss = train(args, train_dataset, model, tokenizer , kmerClassifer, clsClassifer)
-        logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
+        train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
+        print("finish training")
+        #logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
     if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0) and args.task_name != "dna690":

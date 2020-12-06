@@ -96,6 +96,12 @@ def glue_convert_examples_to_features(
         else:
             inputs = tokenizer.encode_plus(example.text_a, example.text_b, add_special_tokens=True, max_length=max_length,)
             input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+        # print("original text length: ",len(example.text_a.split()))
+        # print("input_ids length:",len(input_ids))
+        # print(tokenizer.convert_tokens_to_ids(["<CLS>",]))
+        # print(input_ids)
+        # print(tokenizer.convert_ids_to_tokens([1,2,3,4]))
+        
 
         
 
@@ -200,6 +206,7 @@ class DnaDeepSeaProcessor(DataProcessor):
                 continue
             guid = "%s-%s" % (set_type, i)
             text_a = line[0]
+            #print("sequence length = ",len(text_a.split()))
             fake_label = line[1] # single label
             real_label = line[2] # a list 919 labels
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=real_label, label=fake_label))

@@ -9,9 +9,9 @@ batch_size = 100
 num_batches = 600
 num_epochs = 10
 
-class KmerClassifer(nn.Module):
+class KmerClassifier(nn.Module):
     def __init__(self,):
-        super(KmerClassifer, self).__init__()
+        super(KmerClassifier, self).__init__()
         # self.conv1 = nn.Conv2d(768,850,(1, 8),(1, 1))
         # self.conv2 = nn.Conv2d(850,960,(1, 8),(1, 1))
         self.conv1 = nn.Conv1d(768,850,8)
@@ -19,8 +19,9 @@ class KmerClassifer(nn.Module):
         self.pool = nn.MaxPool1d(4,4)
         self.drop1 = nn.Dropout(0.2)
         self.drop2 = nn.Dropout(0.5)
-        self.linear1 = nn.Linear(960,925)
-        self.linear2 = nn.Linear(925,919)
+        self.linear1 = nn.Linear(960,919)
+
+        self.linear2 = nn.Linear(119*919,919)
         self.sig = nn.Sigmoid()
 		#nn.Threshold(0, 1e-06)
 		#nn.Threshold(0, 1e-06)
@@ -32,46 +33,53 @@ class KmerClassifer(nn.Module):
 
 
     def forward(self, inputs): # similar to call function
-        print("forward")
+        #print("forward")
+        #print("inputs shape: ",inputs.shape)
         inputs = inputs.transpose(1, 2)
+        #print("inputs shape,transpose: ",inputs.shape)
         x = self.conv1(inputs)
+        #print("x shape: ",x.shape)
         x = F.relu(x)
         x = self.pool(x)
         conv1 = self.drop1(x)
+        #print("conv1 shape: ",conv1.shape)
 
         y = self.conv2(conv1)
+        #print("y shape: ",y.shape)
         y = F.relu(y)
-        #y = self.pool(y)
-        conv2 = self.drop2(y)
+        # y = self.pool(y)
+        drop = self.drop2(y)
 
         #conv2 = conv2.view(-1, 53*960)
-        print("conv2 shape: ",conv2.shape)
-        conv2 = conv2.transpose(1, 2)
+        
+        conv2 = drop.transpose(1, 2)
+        #print("conv2 shape: ",conv2.shape)
         linear1 = self.linear1(conv2)
+        #print("linear1 shape: ",linear1.shape)
         #linear1 = F.relu(z)
-
+        #(1，119，919)- （1,119*919）
+        linear1 = linear1.reshape(linear1.shape[0],-1)
+        #print("linear1 reshape shape: ",linear1.shape)
         linear2 = self.linear2(linear1)
+        #print("linear2 shape: ",linear2.shape)
 
         # sig = self.sig(linear2)
 
         return linear2
 
-class ClsClassifer(nn.Module):
+class ClsClassifier(nn.Module):
 
-	def __init__(self,):
-		"""
-		The model class inherits from nn.Module.
-		It stores the trainable weights as class members.
-		"""
-		super(ClsClassifer, self).__init__()
-		self.linear = nn.Linear(768,919)
-		self.sig = nn.Sigmoid()
+    def __init__(self,):
+        super(ClsClassifier, self).__init__()
+        self.linear = nn.Linear(768,919)
 
-	def forward(self, inputs):
-		x = self.linear(inputs)
-		x = self.sig(x)
+    def forward(self, inputs):
+        #print("input shape: ",inputs.shape)
+        x = self.linear(inputs)
+        #print("x: ",x.shape)
 
-		return x
+
+        return x
 
 # def train(model, train_input, train_labels):
 # 	"""
