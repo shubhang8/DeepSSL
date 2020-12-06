@@ -18,8 +18,8 @@ def load_files(train_file, test_file):
     print("loading testing data")
     test_data = loadmat(test_file)
 
-    test_labels = test_data['testdata'][0:100]
-    test_inputs = np.argmax(test_data['testxdata'][0:100], axis = 1)
+    test_labels = test_data['testdata']
+    test_inputs = np.argmax(test_data['testxdata'], axis = 1)
 
     # print(test_labels.shape)
     # print(test_inputs.shape)
@@ -32,8 +32,8 @@ def get_kmers(inputs, labels, dna_dict, len_kmer):
 
     for i in range(1, len(inputs)+ 1):
         # just to track time in big files -- can delete this
-        # if i % 10000 == 0:
-        #     print(i/len(inputs))
+        if i % 10000 == 0:
+            print(i/len(inputs))
         kmers[i, 0] = ''
         seq = ''
         for j in range(len(inputs[0])):
@@ -68,21 +68,21 @@ dna_dict = {
     3: "G"
 }
 
-k = 3
-print("k = 3")
+# k = 3
+# print("k = 3")
 
-print("starting testing 3-mers")
-test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/3_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
+# print("starting testing 3-mers")
+# test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/3_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 3-mers")
-train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/3_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+# print("starting training 3-mers")
+# train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/3_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
 k = 4
 print("k = 4")
 
-pprint("starting testing 3-mers")
+print("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
 np.savetxt('./DNABert/examples/DeepSea_data/4_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
