@@ -1081,6 +1081,7 @@ def main():
     #args.deepSeaClassifier = "kmer"
     print("here2.5")
     if args.deepSeaClassifier == "kmer":
+        print("here2.6")
         kmerClassifier = KmerClassifier()
         print("here2.7")
     elif args.deepSeaClassifier == "cls":
