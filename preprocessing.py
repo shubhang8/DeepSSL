@@ -3,57 +3,62 @@ import h5py
 import numpy as np
 from scipy.io import loadmat
 
-def load_files(train_file, valid_file, test_file):
+def load_files(train_file, test_file):
     print("loading training data")
     with h5py.File(train_file, 'r') as train_data:
         train_labels = np.transpose(train_data['traindata'], (1, 0))
+        train_labels = train_labels[0:1000]
+        # print(train_labels.shape)
 
         traindata = train_data['trainxdata']
-        train_inputs = np.empty((4400000, 1000), dtype=np.float32)
-        for i in range(int(4400000/1000)):
-            train_inputs[i*1000:(i+1)*1000] = np.transpose(np.argmax(traindata[:, :, i*1000:(i+1)*1000], axis=1))
-
-    print("loading validation data")
-    valid_data = loadmat(valid_file)
-
-    valid_labels = valid_data['validdata']
-    valid_inputs = np.argmax(valid_data['validxdata'], axis = 1)
+        train_inputs = np.empty((1000, 1000), dtype=np.float32)
+        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:1000], axis=1))
+        # print(train_inputs.shape)
 
     print("loading testing data")
     test_data = loadmat(test_file)
 
-    test_labels = test_data['testdata']
-    test_inputs = np.argmax(test_data['testxdata'], axis = 1)
+    test_labels = test_data['testdata'][0:100]
+    test_inputs = np.argmax(test_data['testxdata'][0:100], axis = 1)
 
-    return train_inputs, train_labels, valid_inputs, valid_labels, test_inputs, test_labels
+    # print(test_labels.shape)
+    # print(test_inputs.shape)
+
+    return train_inputs, train_labels, test_inputs, test_labels
 
 def get_kmers(inputs, labels, dna_dict, len_kmer):
-    kmers = np.empty((len(inputs), 3), dtype=object)
+    kmers = np.empty((len(inputs) + 1, 3), dtype=object)
+    kmers[0] = "sequence", "fake_label", "real_label"
 
-    for i in range(len(inputs)):
-        # # just to track time in big files -- can delete this
+    for i in range(1, len(inputs)+ 1):
+        # just to track time in big files -- can delete this
         # if i % 10000 == 0:
         #     print(i/len(inputs))
         kmers[i, 0] = ''
         seq = ''
         for j in range(len(inputs[0])):
-            seq += dna_dict[inputs[i,j]] # get sequence
+            seq += dna_dict[inputs[i-1,j]] # get sequence
 
-        for j in range(len(inputs[0]) - k):
+        num_kmers = 0
+        for j in range(245, 755):
             kmers[i, 0] += seq[j:j+k]
             kmers[i, 0] += ' ' # separate kmers by spaces
+            num_kmers += 1
 
         kmers[i, 1] = 1 # fake label
-        kmers[i, 2] = labels[i] # real label
-
+        # kmers[i, 2] = labels[i]
+        kmers[i, 2] = ''
+        for j in range(len(labels[0])):
+            kmers[i, 2] += str(labels[i-1, j]) # real label
+            kmers[i, 2] += ' '
+    # print(num_kmers)
     return kmers
 
 ## MIGHT NEED TO CHANGE THESE
 train_file = 'train.mat'
-valid_file = 'valid.mat'
 test_file = 'test.mat'
 
-train_inputs, train_labels, valid_inputs, valid_labels, test_inputs, test_labels = load_files(train_file, valid_file, test_file)
+train_inputs, train_labels, test_inputs, test_labels = load_files(train_file, test_file)
 
 
 dna_dict = {
@@ -66,10 +71,6 @@ dna_dict = {
 k = 3
 print("k = 3")
 
-print("starting validation 3-mers")
-valid_kmers = get_kmers(valid_inputs, valid_labels, dna_dict, k)
-np.savetxt('valid_3.gz', valid_kmers, fmt='%s', delimiter='\t')
-
 print("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
 np.savetxt('test_3.gz', test_kmers, fmt='%s', delimiter='\t')
@@ -80,10 +81,6 @@ np.savetxt('train_3.gz', train_kmers, fmt='%s', delimiter='\t')
 
 k = 4
 print("k = 4")
-
-print("starting validation 4-mers")
-valid_kmers = get_kmers(valid_inputs, valid_labels, dna_dict, k)
-np.savetxt('valid_4.gz', valid_kmers, fmt='%s', delimiter='\t')
 
 print("starting testing 4-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
@@ -96,10 +93,6 @@ np.savetxt('train_4.gz', train_kmers, fmt='%s', delimiter='\t')
 k = 5
 print("k = 5")
 
-print("starting validation 5-mers")
-valid_kmers = get_kmers(valid_inputs, valid_labels, dna_dict, k)
-np.savetxt('valid_5.gz', valid_kmers, fmt='%s', delimiter='\t')
-
 print("starting testing 5-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
 np.savetxt('test_5.gz', test_kmers, fmt='%s', delimiter='\t')
@@ -110,10 +103,6 @@ np.savetxt('train_5.gz', train_kmers, fmt='%s', delimiter='\t')
 
 k = 6
 print("k = 6")
-
-print("starting validation 6-mers")
-valid_kmers = get_kmers(valid_inputs, valid_labels, dna_dict, k)
-np.savetxt('valid_6.gz', valid_kmers, fmt='%s', delimiter='\t')
 
 print("starting testing 6-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
