@@ -342,8 +342,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,) 
-
-                accuracy = sum(deepsea_labels.flatten().eq(results))
+                targets = deepsea_labels.flatten().cpu()
+                accuracy = sum(targets.eq(results))
                 #print("accu: ",accuracy)
 
             if clsClassifier:
@@ -361,7 +361,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,0) 
 
-                accuracy = sum(deepsea_labels.flatten().eq(results))
+                targets = deepsea_labels.flatten().cpu()
+                accuracy = sum(targets.eq(results))
                 #print("accu: ",accuracy)
 
             experiment.log_metric("Train Loss", l)
@@ -451,7 +452,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
-                accuracy = sum(deepsea_labels.flatten().eq(results.flatten()))
+                accuracy = sum(deepsea_labels.flatten().eq(results))
 
 
             if clsClassifier:
@@ -461,7 +462,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
-                accuracy = sum(deepsea_labels.flatten().eq(results.flatten()))
+                accuracy = sum(deepsea_labels.flatten().eq(results))
             # #print("accu: ",accuracy)
 
             # if clsClassifer:
