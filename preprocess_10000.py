@@ -32,8 +32,8 @@ def get_kmers(inputs, labels, dna_dict, len_kmer):
 
     for i in range(1, len(inputs)+ 1):
         # just to track time in big files -- can delete this
-        # if i % 10000 == 0:
-        #     print(i/len(inputs))
+        if i % 10000 == 0:
+            print(i/len(inputs))
         kmers[i, 0] = ''
         seq = ''
         for j in range(len(inputs[0])):
