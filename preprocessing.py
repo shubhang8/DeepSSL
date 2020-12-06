@@ -73,41 +73,44 @@ print("k = 3")
 
 print("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('test_3.gz', test_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/3_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
 print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_3.gz', train_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/3_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
 k = 4
 print("k = 4")
 
-print("starting testing 4-mers")
+pprint("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('test_4.gz', test_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/4_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 4-mers")
+print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_4.gz', train_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/4_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+
 
 k = 5
 print("k = 5")
 
-print("starting testing 5-mers")
+print("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('test_5.gz', test_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/5_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 5-mers")
+print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_5.gz', train_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/5_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+
 
 k = 6
 print("k = 6")
 
-print("starting testing 6-mers")
+print("starting testing 3-mers")
 test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('test_6.gz', test_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/6_small/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 6-mers")
+print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('train_6.gz', train_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/6_small/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+
