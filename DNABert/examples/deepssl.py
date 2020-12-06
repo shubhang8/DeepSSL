@@ -337,7 +337,12 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 classifier_optimizer.step()
                 #print(deepsea_labels.flatten())
                 #print(kmer_output.flatten())
-                accuracy = sum(deepsea_labels.flatten().eq(kmer_output.flatten()))
+
+                results = kmer_output.flatten()
+                results = np.where(results>=0.5,1)
+                results = np.where(results<0.5,0) 
+
+                accuracy = sum(deepsea_labels.flatten().eq(results))
                 #print("accu: ",accuracy)
 
             if clsClassifier:
@@ -349,7 +354,12 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 l.backward()
                 optimizer.step()
                 classifier_optimizer.step()
-                accuracy = sum(deepsea_labels.eq(cls_output))
+
+                results = cls_output.flatten()
+                results = np.where(results>=0.5,1)
+                results = np.where(results<0.5,0) 
+
+                accuracy = sum(deepsea_labels.flatten().eq(results))
                 #print("accu: ",accuracy)
 
             experiment.log_metric("Train Loss", l)
