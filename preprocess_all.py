@@ -52,8 +52,8 @@ def get_kmers(inputs, labels, dna_dict, len_kmer):
     return kmers
 
 ## MIGHT NEED TO CHANGE THESE
-train_file = 'train.mat'
-test_file = 'test.mat'
+train_file = './deepsea_train/train.mat'
+test_file = './deepsea_train/test.mat'
 
 train_inputs, train_labels, test_inputs, test_labels = load_files(train_file, test_file)
 
