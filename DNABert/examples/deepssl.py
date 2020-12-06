@@ -49,6 +49,8 @@ import torch as torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torch.optim import Adam
+
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
@@ -199,6 +201,10 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
     warmup_steps = args.warmup_steps if args.warmup_percent == 0 else int(args.warmup_percent*t_total)
 
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon, betas=(args.beta1,args.beta2))
+    if kmerClassifier:
+        classifier_optimizer = Adam(kmerClassifier.parameters(),lr=args.learning_rate)
+    if clsClassifier:
+        classifier_optimizer = Adam(clsClassifier.parameters(),lr=args.learning_rate)
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=warmup_steps, num_training_steps=t_total
     )
@@ -325,8 +331,12 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 l = loss_fn(kmer_output, deepsea_labels.float())
                 #print("loss: ",l)
                 optimizer.zero_grad()
+                classifier_optimizer.zero_grad()
                 l.backward()
                 optimizer.step()
+                classifier_optimizer.step()
+                #print(deepsea_labels.flatten())
+                #print(kmer_output.flatten())
                 accuracy = sum(deepsea_labels.flatten().eq(kmer_output.flatten()))
                 #print("accu: ",accuracy)
 
@@ -335,8 +345,10 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 #print("cls output: ",cls_output)
                 l = loss_fn(cls_output, deepsea_labels.float())
                 optimizer.zero_grad()
+                classifier_optimizer.zero_grad()
                 l.backward()
                 optimizer.step()
+                classifier_optimizer.step()
                 accuracy = sum(deepsea_labels.eq(cls_output))
                 #print("accu: ",accuracy)
 
@@ -421,6 +433,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             if kmerClassifier:
                 output = kmerClassifier(kmer_hidden_states)
                 l = loss_fn(output, deepsea_labels.float())
+                #print(deepsea_labels.flatten())
+                #print(output.flatten())
                 #print("loss: ",l)
                 accuracy = sum(deepsea_labels.flatten().eq(output.flatten()))
 
