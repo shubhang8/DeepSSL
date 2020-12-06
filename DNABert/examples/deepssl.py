@@ -453,8 +453,10 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
+                #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
-                accuracy = sum(deepsea_labels.flatten().eq(results))
+                targets = deepsea_labels.flatten().cpu()
+                accuracy = sum(targets.eq(results))/len(targets)
 
 
             if clsClassifier:
@@ -464,8 +466,10 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
+                #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
-                accuracy = sum(deepsea_labels.flatten().eq(results))
+                targets = deepsea_labels.flatten().cpu()
+                accuracy = sum(targets.eq(results))/len(targets)
             # #print("accu: ",accuracy)
 
             # if clsClassifer:
