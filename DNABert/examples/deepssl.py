@@ -340,8 +340,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
                 results = kmer_output.flatten()
                 results = results.cpu()
-                results = np.where(results>=0.5,1)
-                results = np.where(results<0.5,0) 
+                results = np.where(results>=0.5,1,0)
+                #results = np.where(results<0.5,) 
 
                 accuracy = sum(deepsea_labels.flatten().eq(results))
                 #print("accu: ",accuracy)
@@ -358,8 +358,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
                 results = cls_output.flatten()
                 results = results.cpu()
-                results = np.where(results>=0.5,1)
-                results = np.where(results<0.5,0) 
+                results = np.where(results>=0.5,1,0)
+                #results = np.where(results<0.5,0) 
 
                 accuracy = sum(deepsea_labels.flatten().eq(results))
                 #print("accu: ",accuracy)
@@ -448,15 +448,20 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 #print(deepsea_labels.flatten())
                 #print(output.flatten())
                 #print("loss: ",l)
-                accuracy = sum(deepsea_labels.flatten().eq(output.flatten()))
+                results = output.flatten()
+                results = results.cpu()
+                results = np.where(results>=0.5,1,0)
+                accuracy = sum(deepsea_labels.flatten().eq(results.flatten()))
 
 
             if clsClassifier:
                 output = clsClassifier(CLS_hidden_state)
                 l = loss_fn(output, deepsea_labels.float())
                 #print("loss: ",l)
-                accuracy = sum(deepsea_labels.flatten().eq(output.flatten()))
-
+                results = output.flatten()
+                results = results.cpu()
+                results = np.where(results>=0.5,1,0)
+                accuracy = sum(deepsea_labels.flatten().eq(results.flatten()))
             # #print("accu: ",accuracy)
 
             # if clsClassifer:
