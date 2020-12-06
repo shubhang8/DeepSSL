@@ -343,7 +343,9 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,) 
                 targets = deepsea_labels.flatten().cpu()
-                accuracy = sum(targets.eq(results))
+                print("target type: ",type(target))
+                print("result type: ",type(results))
+                accuracy = sum(targets.eq(results))/len(targets)
                 #print("accu: ",accuracy)
 
             if clsClassifier:
