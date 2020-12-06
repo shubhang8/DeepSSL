@@ -1076,6 +1076,7 @@ def main():
     #define classifer for kmer and cls
     kmerClassifier = None
     clsClassifier = None
+    args.deepSeaClassifier = "kmer"
     if args.deepSeaClassifier == "kmer":
         kmerClassifier = KmerClassifier()
     if args.deepSeaClassifier == "cls":
