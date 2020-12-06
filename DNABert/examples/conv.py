@@ -11,9 +11,8 @@ num_epochs = 10
 
 class KmerClassifier(nn.Module):
     def __init__(self,):
+        print("before super")
         super(KmerClassifier, self).__init__()
-        # self.conv1 = nn.Conv2d(768,850,(1, 8),(1, 1))
-        # self.conv2 = nn.Conv2d(850,960,(1, 8),(1, 1))
         print("kmer cnn")
         self.conv1 = nn.Conv1d(768,850,8)
         self.conv2 = nn.Conv1d(850,960,8)
