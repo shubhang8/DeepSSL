@@ -1078,10 +1078,11 @@ def main():
     #define classifer for kmer and cls
     kmerClassifier = None
     clsClassifier = None
-    args.deepSeaClassifier = "kmer"
+    #args.deepSeaClassifier = "kmer"
+    print("here2.5")
     if args.deepSeaClassifier == "kmer":
         kmerClassifier = KmerClassifier()
-    if args.deepSeaClassifier == "cls":
+    elif args.deepSeaClassifier == "cls":
         clsClassifier = ClsClassifier()
     print("here3")
     # Prepare GLUE task
