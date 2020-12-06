@@ -28,9 +28,9 @@ def get_kmers(inputs, labels, dna_dict, len_kmer):
     kmers[0] = "sequence", "fake_label", "real_label"
 
     for i in range(1, len(inputs)+ 1):
-        # just to track time in big files -- can delete this
-        # if i % 10000 == 0:
-        #     print(i/len(inputs))
+        #just to track time in big files -- can delete this
+        if i % 10000 == 0:
+            print(i/len(inputs))
         kmers[i, 0] = ''
         seq = ''
         for j in range(len(inputs[0])):
@@ -68,43 +68,43 @@ dna_dict = {
 k = 3
 print("k = 3")
 
-print("starting testing 3-mers")
-test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/3/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
+# print("starting testing 3-mers")
+# test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/3/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
 print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
 np.savetxt('./DNABert/examples/DeepSea_data/3/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
-k = 4
-print("k = 4")
+# k = 4
+# print("k = 4")
 
-print("starting testing 4-mers")
-test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/4/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
+# print("starting testing 4-mers")
+# test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/4/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 4-mers")
-train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/4/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+# print("starting training 4-mers")
+# train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/4/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
-k = 5
-print("k = 5")
+# k = 5
+# print("k = 5")
 
-print("starting testing 5-mers")
-test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/5/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
+# print("starting testing 5-mers")
+# test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/5/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 5-mers")
-train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/5/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+# print("starting training 5-mers")
+# train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/5/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
-k = 6
-print("k = 6")
+# k = 6
+# print("k = 6")
 
-print("starting testing 6-mers")
-test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/6/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
+# print("starting testing 6-mers")
+# test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/6/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 6-mers")
-train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/6/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+# print("starting training 6-mers")
+# train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/6/train.tsv', train_kmers, fmt='%s', delimiter='\t')
