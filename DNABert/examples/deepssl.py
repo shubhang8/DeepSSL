@@ -344,8 +344,6 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
-                print("target type: ",type(targets))
-                print("result type: ",type(results))
                 accuracy = sum(targets.eq(results))/len(targets)
                 #print("accu: ",accuracy)
 
@@ -363,7 +361,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,0) 
-
+                results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))
                 #print("accu: ",accuracy)
@@ -455,6 +453,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
+                results = torch.from_numpy(results)
                 accuracy = sum(deepsea_labels.flatten().eq(results))
 
 
@@ -465,6 +464,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
+                results = torch.from_numpy(results)
                 accuracy = sum(deepsea_labels.flatten().eq(results))
             # #print("accu: ",accuracy)
 
