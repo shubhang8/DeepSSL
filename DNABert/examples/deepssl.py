@@ -1068,9 +1068,10 @@ def main():
         bool(args.local_rank != -1),
         args.fp16,
     )
-
+    print("here1")
     # Set seed
     set_seed(args)
+    print("here2")
 
     #define classifer for kmer and cls
     kmerClassifier = None
@@ -1079,7 +1080,7 @@ def main():
         kmerClassifier = KmerClassifier()
     if args.deepSeaClassifier == "cls":
         clsClassifier = ClsClassifier()
-
+    print("here3")
     # Prepare GLUE task
     args.task_name = args.task_name.lower()
     if args.task_name not in processors:
@@ -1095,7 +1096,7 @@ def main():
     
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-
+    print("here4")
     if not args.do_visualize and not args.do_ensemble_pred:
         config = config_class.from_pretrained(
             args.config_name if args.config_name else args.model_name_or_path,
@@ -1140,6 +1141,7 @@ def main():
         logger.info("Training/evaluation parameters %s", args)
 
     # Training
+    print("here5")
     if args.do_train:
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
         train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
