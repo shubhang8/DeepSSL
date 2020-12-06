@@ -1083,9 +1083,11 @@ def main():
     if args.deepSeaClassifier == "kmer":
         print("here2.6")
         kmerClassifier = KmerClassifier()
+        kmerClassifier.to(device)
         print("here2.7")
     elif args.deepSeaClassifier == "cls":
         clsClassifier = ClsClassifier()
+        clsClassifier.to(device)
     print("here3")
     # Prepare GLUE task
     args.task_name = args.task_name.lower()
