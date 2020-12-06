@@ -339,6 +339,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 #print(kmer_output.flatten())
 
                 results = kmer_output.flatten()
+                results = results.cpu()
                 results = np.where(results>=0.5,1)
                 results = np.where(results<0.5,0) 
 
@@ -356,6 +357,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 classifier_optimizer.step()
 
                 results = cls_output.flatten()
+                results = results.cpu()
                 results = np.where(results>=0.5,1)
                 results = np.where(results<0.5,0) 
 
