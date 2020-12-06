@@ -340,8 +340,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 accuracy = sum(deepsea_labels.eq(cls_output))
                 #print("accu: ",accuracy)
 
-            experiment.log_metric("Loss", l)
-            experiment.log_metric("Accuracy", accuracy)
+            experiment.log_metric("Train Loss", l)
+            experiment.log_metric("Train Accuracy", accuracy)
 
         #save check point model
 
@@ -440,9 +440,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             #     optimizer.zero_grad()
             #     print("accu: ",accuracy)
 
-            experiment.log_metric("Loss", l)
-            experiment.log_metric("Accuracy", accuracy)
-
+            experiment.log_metric("Evaluate Loss", l)
+            experiment.log_metric("Evaluate Accuracy", accuracy)
 
 
                 
