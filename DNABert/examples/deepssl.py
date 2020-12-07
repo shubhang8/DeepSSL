@@ -538,6 +538,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     print(np.all(np.isfinite(scaledResults)))
     print(np.any(np.isnan(scaledResults)))
 
+    scaledResults = np.nan_to_num(scaledResults)
+
 
 
     if args.metric == "AUROC":
