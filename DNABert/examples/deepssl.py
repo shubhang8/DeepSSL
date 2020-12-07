@@ -532,11 +532,11 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     scaledResults = [value.item() for value in scaledResults]
     #all_predict = [value.item() for value in all_predict]
 
-    np.all(np.isfinite(all_labels))
-    np.any(np.isnan(all_labels))
+    print(np.all(np.isfinite(all_labels)))
+    print(np.any(np.isnan(all_labels)))
 
-    np.all(np.isfinite(scaledResults))
-    np.any(np.isnan(scaledResults))
+    print(np.all(np.isfinite(scaledResults)))
+    print(np.any(np.isnan(scaledResults)))
 
 
 
