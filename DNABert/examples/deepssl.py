@@ -527,9 +527,17 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     scaledResults = [((value - minVal)/(maxVal - minVal)) for value in all_output]
     print("Calculate metrics")
 
+
     all_labels = [value.item() for value in all_labels]
     scaledResults = [value.item() for value in scaledResults]
     #all_predict = [value.item() for value in all_predict]
+
+    np.all(np.isfinite(all_labels))
+    np.any(np.isnan(all_labels))
+
+    np.all(np.isfinite(scaledResults))
+    np.any(np.isnan(scaledResults))
+
 
 
     if args.metric == "AUROC":
