@@ -18,8 +18,8 @@ def load_files(train_file, test_file):
     print("loading testing data")
     test_data = loadmat(test_file)
 
-    test_labels = test_data['testdata'][:10000]
-    test_inputs = np.argmax(test_data['testxdata'][:10000], axis = 1)
+    test_labels = test_data['testdata'][:1000]
+    test_inputs = np.argmax(test_data['testxdata'][:1000], axis = 1)
 
     # print(test_labels.shape)
     # print(test_inputs.shape)
