@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 from scipy.io import loadmat
 
-def load_files(train_file, test_file):
+def load_files_all(train_file, test_file):
     print("loading training data")
     with h5py.File(train_file, 'r') as train_data:
         train_labels = np.transpose(train_data['traindata'], (1, 0))
@@ -12,7 +12,7 @@ def load_files(train_file, test_file):
 
         traindata = train_data['trainxdata']
         train_inputs = np.empty((len(traindata), 1000), dtype=np.float32)
-        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:len(traindata)], axis=1))
+        train_inputs = np.transpose(np.argmax(traindata[:, :, :], axis=1))
         # print(train_inputs.shape)
 
     print("loading testing data")
@@ -20,6 +20,29 @@ def load_files(train_file, test_file):
 
     test_labels = test_data['testdata']
     test_inputs = np.argmax(test_data['testxdata'], axis = 1)
+
+    return train_inputs, train_labels, test_inputs, test_labels
+
+def load_files_10k(train_file, test_file):
+    print("loading training data")
+    with h5py.File(train_file, 'r') as train_data:
+        train_labels = np.transpose(train_data['traindata'], (1, 0))
+        train_labels = train_labels[0:10000]
+        # print(train_labels.shape)
+
+        traindata = train_data['trainxdata']
+        train_inputs = np.empty((10000, 1000), dtype=np.float32)
+        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:10000], axis=1))
+        # print(train_inputs.shape)
+
+    print("loading testing data")
+    test_data = loadmat(test_file)
+
+    test_labels = test_data['testdata']
+    test_inputs = np.argmax(test_data['testxdata'], axis = 1)
+
+    # print(test_labels.shape)
+    # print(test_inputs.shape)
 
     return train_inputs, train_labels, test_inputs, test_labels
 
@@ -55,7 +78,7 @@ def get_kmers(inputs, labels, dna_dict, len_kmer):
 train_file = './deepsea_train/train.mat'
 test_file = './deepsea_train/test.mat'
 
-train_inputs, train_labels, test_inputs, test_labels = load_files(train_file, test_file)
+train_inputs, train_labels, test_inputs, test_labels = load_files_all(train_file, test_file)
 
 
 dna_dict = {
@@ -64,17 +87,37 @@ dna_dict = {
     2: "T",
     3: "G"
 }
-
 k = 3
 print("k = 3")
+ks = [3,4,5,6]
+
+for k in ks:
+    print("starting testing 3-mers")
+    test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+    np.savetxt('./DNABert/examples/DeepSea_data/%s/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
+    print("starting training 3-mers")
+    train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+    np.savetxt('./DNABert/examples/DeepSea_data/%s/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
+
+
+train_inputs, train_labels, test_inputs, test_labels = load_files_10k(train_file, test_file)
+ks = [3,4,5,6]
+
+for k in ks:
+    print("starting testing 3-mers")
+    test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_mediem/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
+    print("starting training 3-mers")
+    train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_mediem/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
 
 # print("starting testing 3-mers")
 # test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
 # np.savetxt('./DNABert/examples/DeepSea_data/3/dev.tsv', test_kmers, fmt='%s', delimiter='\t')
 
-print("starting training 3-mers")
-train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/3/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+# print("starting training 3-mers")
+# train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
+# np.savetxt('./DNABert/examples/DeepSea_data/3/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
 # k = 4
 # print("k = 4")
@@ -108,3 +151,6 @@ np.savetxt('./DNABert/examples/DeepSea_data/3/train.tsv', train_kmers, fmt='%s',
 # print("starting training 6-mers")
 # train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
 # np.savetxt('./DNABert/examples/DeepSea_data/6/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+
+
+
