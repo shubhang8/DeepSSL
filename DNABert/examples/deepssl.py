@@ -1190,7 +1190,7 @@ def main():
 
     # add comet tag
     experiment.add_tag(args.deepSeaClassifier)
-    experiment.add_tag(args.DATA_PATH.split("/")[-1])
+    experiment.add_tag(args.data_dir.split("/")[-1])
     #experiment.add_tag(args.DATA_PATH.split("/")[-1])
     # Training
     print("here5")
