@@ -528,12 +528,12 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
     if args.metric == "AUROC":
         image_output_path = args.output_dir+"/AUROC.png"
-        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
+        curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
         #AUROC(experiment, targets, predict, img_path, curve_name)
         AUROC(experiment,all_labels,scaledResults,image_output_path, curve_name)
     if args.metric == "AUPRC":
         image_output_path = args.output_dir+"/AUPRC.png"
-        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
+        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.k)
         AUPRC(experiment,all_labels,scaledResults,image_output_path, curve_name)
 
     #(targets, predict)
@@ -1120,6 +1120,8 @@ def main():
 
     parser.add_argument("--deepSeaClassifier", type=str, default=None, help="Deepsea classification")
     parser.add_argument("--metric", type=str, default=None, help="AUROC or AUPRC")
+    parser.add_argument("--k", type=str, default=None, help="k value")
+    
     args = parser.parse_args()
 
     if args.should_continue:
