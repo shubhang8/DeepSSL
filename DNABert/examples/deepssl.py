@@ -44,6 +44,7 @@ from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
 from conv import KmerClassifier,ClsClassifier
+from myMetric import AUROC,AUPRC,F1
 
 import torch as torch
 import torch.nn as nn
@@ -94,6 +95,12 @@ try:
 except ImportError:
     from tensorboardX import SummaryWriter
 
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+from matplotlib import pyplot
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +427,9 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     out_label_ids = None
 
     loss_fn = nn.BCEWithLogitsLoss()
-    
+    all_labels = []
+    all_output = []
+    all_predict = []
     for batch in tqdm(eval_dataloader, desc="Evaluating"):
         model.eval()
         batch = tuple(t.to(args.device) for t in batch)
@@ -443,6 +452,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             kmer_hidden_states = last_hidden_state[:,1:,:]  #(batch_size,seq_size-1,hidden_size)
             #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
             deepsea_labels = batch[4] # batch * 919 tensor float
+
+
             
             if kmerClassifier:
                 output = kmerClassifier(kmer_hidden_states)
@@ -452,8 +463,19 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 #print("loss: ",l)
                 results = output.flatten()
                 results = results.cpu()
+
+                #prepare for AUROC
+                # minVal = min(results)
+                # maxVal = max(results)
+
+                #scaledResults = [(value - minVal)/(maxVal - minVal) for value in results]
+                all_output += results
+                all_labels += deepsea_labels.flatten()
+
                 results = np.where(results>=0.5,1,0)
-                #results = np.where(results<0.5,) 
+
+                all_predict += results
+
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
@@ -465,7 +487,22 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 #print("loss: ",l)
                 results = output.flatten()
                 results = results.cpu()
+
+                all_output += results
+                all_labels += deepsea_labels.flatten()
+                
+
                 results = np.where(results>=0.5,1,0)
+                print("!!!!!!!!!!!!!!!!!!!!!")
+                print(results.shape)
+                print(type(results))
+
+                results_to_save = results.tolist()
+                #print(results_to_save.shape)
+                print(type(results_to_save))
+                print(results_to_save)
+
+                all_predict += results_to_save
                 #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
@@ -482,7 +519,37 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             experiment.log_metric("Evaluate Loss", l)
             experiment.log_metric("Evaluate Accuracy", accuracy)
 
+    #prepare for AUROC
+    minVal = min(results)
+    maxVal = max(results)      
 
+    #scale results to [0,1]     
+    scaledResults = [(value - minVal)/(maxVal - minVal) for value in all_output]
+
+    if args.metric == "AUROC":
+        image_output_path = args.output_dir+"/AUROC.png"
+        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
+        #AUROC(experiment, targets, predict, img_path, curve_name)
+        AUROC(experiment,all_labels,scaledResults,image_output_path, curve_name)
+    if args.metric == "AUPRC":
+        image_output_path = args.output_dir+"/AUPRC.png"
+        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
+        AUPRC(experiment,all_labels,scaledResults,image_output_path, curve_name)
+
+    #(targets, predict)
+    F1(experiment,all_labels,all_predict)
+
+
+
+    # ns_fpr, ns_tpr, _ = roc_curve(all_labels, scaledResults)
+
+
+
+
+
+
+
+                
                 
 
     #             eval_loss += tmp_eval_loss.mean().item()
@@ -1052,7 +1119,7 @@ def main():
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
 
     parser.add_argument("--deepSeaClassifier", type=str, default=None, help="Deepsea classification")
-    
+    parser.add_argument("--metric", type=str, default=None, help="AUROC or AUPRC")
     args = parser.parse_args()
 
     if args.should_continue:
@@ -1191,6 +1258,8 @@ def main():
     # add comet tag
     experiment.add_tag(args.deepSeaClassifier)
     experiment.add_tag(args.data_dir.split("/")[-1])
+    experiment.add_tag(args.metric)
+
     #experiment.add_tag(args.DATA_PATH.split("/")[-1])
     # Training
     print("here5")
@@ -1225,24 +1294,28 @@ def main():
 
     # Evaluation
     results = {}
-    if args.do_eval and args.local_rank in [-1, 0]:
-        tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
-        checkpoints = [args.output_dir]
-        if args.eval_all_checkpoints:
-            checkpoints = list(
-                os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
-            )
-            logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-        logger.info("Evaluate the following checkpoints: %s", checkpoints)
-        for checkpoint in checkpoints:
-            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
-            prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
 
-            model = model_class.from_pretrained(checkpoint)
-            model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=prefix)
-            result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
-            results.update(result)
+    # if args.do_eval:
+
+
+    # if args.do_eval and args.local_rank in [-1, 0]:
+    #     tokenizer = tokenizer_class.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
+    #     checkpoints = [args.output_dir]
+    #     if args.eval_all_checkpoints:
+    #         checkpoints = list(
+    #             os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True))
+    #         )
+    #         logging.getLogger("transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
+    #     logger.info("Evaluate the following checkpoints: %s", checkpoints)
+    #     for checkpoint in checkpoints:
+    #         global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+    #         prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
+
+    #         model = model_class.from_pretrained(checkpoint)
+    #         model.to(args.device)
+    #         result = evaluate(args, model, tokenizer, prefix=prefix)
+    #         result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
+    #         results.update(result)
 
     # Prediction
     predictions = {}
