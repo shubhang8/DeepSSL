@@ -493,14 +493,14 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 
 
                 results = np.where(results>=0.5,1,0)
-                print("!!!!!!!!!!!!!!!!!!!!!")
-                print(results.shape)
-                print(type(results))
+                #print("!!!!!!!!!!!!!!!!!!!!!")
+                #print(results.shape)
+                #print(type(results))
 
                 results_to_save = results.tolist()
                 #print(results_to_save.shape)
-                print(type(results_to_save))
-                print(results_to_save)
+                #print(type(results_to_save))
+                #print(results_to_save)
 
                 all_predict += results_to_save
                 #results = np.where(results<0.5,) 
