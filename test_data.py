@@ -77,7 +77,7 @@ np.savetxt('./DNABert/examples/DeepSea_data/3_test/dev.tsv', test_kmers, fmt='%s
 
 print("starting training 3-mers")
 train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-np.savetxt('./DNABert/examples/DeepSea_data/3_testt/train.tsv', train_kmers, fmt='%s', delimiter='\t')
+np.savetxt('./DNABert/examples/DeepSea_data/3_test/train.tsv', train_kmers, fmt='%s', delimiter='\t')
 
 # k = 4
 # print("k = 4")
