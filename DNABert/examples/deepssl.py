@@ -525,13 +525,15 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
     #scale results to [0,1]     
     scaledResults = [(value - minVal)/(maxVal - minVal) for value in all_output]
-
+    print("Calculate metrics")
     if args.metric == "AUROC":
+        print("Calculate AUROC")
         image_output_path = args.output_dir+"/AUROC.png"
         curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         #AUROC(experiment, targets, predict, img_path, curve_name)
         AUROC(experiment,all_labels,scaledResults,image_output_path, curve_name)
     if args.metric == "AUPRC":
+        print("Calculate AUPRC")
         image_output_path = args.output_dir+"/AUPRC.png"
         curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         AUPRC(experiment,all_labels,scaledResults,image_output_path, curve_name)
@@ -1388,7 +1390,7 @@ def main():
                 cache_dir=args.cache_dir if args.cache_dir else None,
             )
             checkpoint = output_dir
-            logger.info("Calculate attention score using the following checkpoint: %s", checkpoint)
+            loggedr.info("Calculate attention score using the following checkpoint: %s", checkpoint)
             prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
             config = config_class.from_pretrained(
                 output_dir,
