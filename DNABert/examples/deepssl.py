@@ -524,12 +524,18 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     maxVal = max(results)      
 
     #scale results to [0,1]     
-    scaledResults = [(value - minVal)/(maxVal - minVal) for value in all_output]
+    scaledResults = [((value - minVal)/(maxVal - minVal)) for value in all_output]
     print("Calculate metrics")
+
+    all_labels = [value.item() for value in all_labels]
+    scaledResults = [value.item() for value in scaledResults]
+    #all_predict = [value.item() for value in all_predict]
+
+
     if args.metric == "AUROC":
         print("Calculate AUROC")
-        print(all_labels)
-        print(scaledResults)
+        #print(all_labels)
+        #print(scaledResults)
         image_output_path = args.output_dir+"/AUROC.png"
         curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         #AUROC(experiment, targets, predict, img_path, curve_name)
