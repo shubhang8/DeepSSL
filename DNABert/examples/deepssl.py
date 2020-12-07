@@ -528,12 +528,12 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
     if args.metric == "AUROC":
         image_output_path = args.output_dir+"/AUROC.png"
-        curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.model_name_or_path.split("-")[0])
+        curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         #AUROC(experiment, targets, predict, img_path, curve_name)
         AUROC(experiment,all_labels,scaledResults,image_output_path, curve_name)
     if args.metric == "AUPRC":
         image_output_path = args.output_dir+"/AUPRC.png"
-        curve_name = "%s, k = %s"%(args.deepSeaClassifier, args.k)
+        curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         AUPRC(experiment,all_labels,scaledResults,image_output_path, curve_name)
 
     #(targets, predict)
@@ -1261,6 +1261,7 @@ def main():
     experiment.add_tag(args.deepSeaClassifier)
     experiment.add_tag(args.data_dir.split("/")[-1])
     experiment.add_tag(args.metric)
+    experiment.add_tag("final")
 
     #experiment.add_tag(args.DATA_PATH.split("/")[-1])
     # Training

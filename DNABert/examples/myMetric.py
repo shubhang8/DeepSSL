@@ -22,8 +22,8 @@ from sklearn.metrics import auc
 
 
 def AUROC(experiment, targets, predict, img_path, curve_name):
-	targets = [1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1]
-	predict = [0.9,0.8,0.7,0.2,0.2,1.0,0.9,0.8,0.3,0.3,0.4,0.9,0.1,0.1,0.9,0.7,0.9,0.3,0.9]
+	# targets = [1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1]
+	# predict = [0.9,0.8,0.7,0.2,0.2,1.0,0.9,0.8,0.3,0.3,0.4,0.9,0.1,0.1,0.9,0.7,0.9,0.3,0.9]
 	auc = roc_auc_score(targets, predict)
 	
 	fpr, tpr, _ = roc_curve(targets, predict)
@@ -44,9 +44,9 @@ def AUROC(experiment, targets, predict, img_path, curve_name):
 	experiment.log_image(img_path)
 
 def AUPRC(experiment, targets, predict, img_path, curve_name):
-	precision, recall, _ = precision_recall_curve(testy, lr_probs)
-	auc = auc(lr_recall, lr_precision)
-	experiment.log_metric("AUPRC",auc)
+	precision, recall, _ = precision_recall_curve(targets, predict)
+	auc_val = auc(recall, precision)
+	experiment.log_metric("AUPRC",auc_val)
 	experiment.log_curve(curve_name,recall, precision)
 
 	pyplot.plot(recall, precision, marker='.', label=curve_name)
