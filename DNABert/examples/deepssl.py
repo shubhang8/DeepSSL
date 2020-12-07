@@ -528,6 +528,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     print("Calculate metrics")
     if args.metric == "AUROC":
         print("Calculate AUROC")
+        print(all_labels)
+        print(scaledResults)
         image_output_path = args.output_dir+"/AUROC.png"
         curve_name = "%s,k=%s"%(args.deepSeaClassifier, args.k)
         #AUROC(experiment, targets, predict, img_path, curve_name)
@@ -1123,6 +1125,7 @@ def main():
     parser.add_argument("--deepSeaClassifier", type=str, default=None, help="Deepsea classification")
     parser.add_argument("--metric", type=str, default=None, help="AUROC or AUPRC")
     parser.add_argument("--k", type=str, default=None, help="k value")
+    parser.add_argument("--final", type=bool, default=False, help="is final run?")
     
     args = parser.parse_args()
 
@@ -1263,7 +1266,8 @@ def main():
     experiment.add_tag(args.deepSeaClassifier)
     experiment.add_tag(args.data_dir.split("/")[-1])
     experiment.add_tag(args.metric)
-    experiment.add_tag("final")
+    if args.final:
+        experiment.add_tag("final")
 
     #experiment.add_tag(args.DATA_PATH.split("/")[-1])
     # Training
