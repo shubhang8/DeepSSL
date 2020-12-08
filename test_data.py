@@ -1,3 +1,7 @@
+
+#val3 train 1000, test 1000
+#val4 train 10000, test 1000
+#val5 train 100000, test 1000
 import sys
 import h5py
 import numpy as np
@@ -7,12 +11,12 @@ def load_files(train_file, test_file):
     print("loading training data")
     with h5py.File(train_file, 'r') as train_data:
         train_labels = np.transpose(train_data['traindata'], (1, 0))
-        train_labels = train_labels[0:10000]
+        train_labels = train_labels[0:100000]
         # print(train_labels.shape)
 
         traindata = train_data['trainxdata']
-        train_inputs = np.empty((10000, 1000), dtype=np.float32)
-        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:10000], axis=1))
+        train_inputs = np.empty((100000, 1000), dtype=np.float32)
+        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:100000], axis=1))
         # print(train_inputs.shape)
 
     print("loading testing data")
@@ -76,7 +80,7 @@ ks = [3,4,5,6]
 for k in ks:
     print("starting testing %d-mers"%k)
     test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-    np.savetxt('./DNABert/examples/DeepSea_data/%s_val4/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_val5/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
     print("starting training %d-mers"%k)
     train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-    np.savetxt('./DNABert/examples/DeepSea_data/%s_val4/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_val5/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
