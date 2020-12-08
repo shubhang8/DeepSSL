@@ -385,10 +385,10 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             model_to_save = (model.module if hasattr(model, "module") else model)  # Take care of distributed/parallel training
             model_to_save.save_pretrained(output_dir)
             tokenizer.save_pretrained(output_dir)
-    if kmerClassifier:
-        evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
-    if clsClassifier:
-        evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
+        if kmerClassifier:
+            evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
+        if clsClassifier:
+            evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
          
 
 
