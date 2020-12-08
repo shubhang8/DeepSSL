@@ -1277,6 +1277,8 @@ def main():
     experiment.add_tag(args.metric)
     if args.final:
         experiment.add_tag("final")
+    if args.special:
+        experiment.add_tag(args.special)
 
     #experiment.add_tag(args.DATA_PATH.split("/")[-1])
     # Training
