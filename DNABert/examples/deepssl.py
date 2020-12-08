@@ -1134,6 +1134,7 @@ def main():
     parser.add_argument("--metric", type=str, default=None, help="AUROC or AUPRC")
     parser.add_argument("--k", type=str, default=None, help="k value")
     parser.add_argument("--final", type=bool, default=False, help="is final run?")
+    parser.add_argument("--special", type=str, default=False, help="extra")
     
     args = parser.parse_args()
 
