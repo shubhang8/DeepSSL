@@ -385,11 +385,10 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             model_to_save = (model.module if hasattr(model, "module") else model)  # Take care of distributed/parallel training
             model_to_save.save_pretrained(output_dir)
             tokenizer.save_pretrained(output_dir)
-        
-    if kmerClassifier:
-        evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
-    if clsClassifier:
-        evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
+        if kmerClassifier:
+            evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
+        if clsClassifier:
+            evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
          
 
 
@@ -465,18 +464,16 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
 
-                #prepare for AUROC
-                # minVal = min(results)
-                # maxVal = max(results)
-
-                #scaledResults = [(value - minVal)/(maxVal - minVal) for value in results]
                 all_output += results
                 all_labels += deepsea_labels.flatten()
+                
 
                 results = np.where(results>=0.5,1,0)
 
-                all_predict += results
+                results_to_save = results.tolist()
 
+                all_predict += results_to_save
+                #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
@@ -489,34 +486,19 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
                 results = output.flatten()
                 results = results.cpu()
 
-                
                 all_output += results
                 all_labels += deepsea_labels.flatten()
+                
 
                 results = np.where(results>=0.5,1,0)
 
-                all_predict += results
+                results_to_save = results.tolist()
 
+                all_predict += results_to_save
+                #results = np.where(results<0.5,) 
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
-                
-
-                # results = np.where(results>=0.5,1,0)
-                # #print("!!!!!!!!!!!!!!!!!!!!!")
-                # #print(results.shape)
-                # #print(type(results))
-
-                # results_to_save = results.tolist()
-                # #print(results_to_save.shape)
-                # #print(type(results_to_save))
-                # #print(results_to_save)
-
-                # all_predict += results_to_save
-                # #results = np.where(results<0.5,) 
-                # results = torch.from_numpy(results)
-                # targets = deepsea_labels.flatten().cpu()
-                # accuracy = sum(targets.eq(results))/len(targets)
             # #print("accu: ",accuracy)
 
             # if clsClassifer:
@@ -542,11 +524,11 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     scaledResults = [value.item() for value in scaledResults]
     #all_predict = [value.item() for value in all_predict]
 
-    # print(np.all(np.isfinite(all_labels)))
-    # print(np.any(np.isnan(all_labels)))
+    print(np.all(np.isfinite(all_labels)))
+    print(np.any(np.isnan(all_labels)))
 
-    # print(np.all(np.isfinite(scaledResults)))
-    # print(np.any(np.isnan(scaledResults)))
+    print(np.all(np.isfinite(scaledResults)))
+    print(np.any(np.isnan(scaledResults)))
 
     scaledResults = np.nan_to_num(scaledResults)
 
