@@ -833,7 +833,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
         args.data_dir = os.path.join(args.data_folder,"{}_{}".format(
             sub_foler_name,args.current_subset))
     if evaluate==True and args.have_subset:
-        args.data_dir = args.data_folder
+        args.data_dir = os.path.join(args.data_folder,"test")
     
     cached_features_file = os.path.join(
         args.data_dir,
@@ -1289,6 +1289,7 @@ def main():
     experiment.add_tag(args.deepSeaClassifier)
     experiment.add_tag(args.data_dir.split("/")[-1])
     experiment.add_tag(args.metric)
+
     if args.final:
         experiment.add_tag("final")
     if args.special:
