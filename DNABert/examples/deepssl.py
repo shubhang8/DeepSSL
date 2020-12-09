@@ -1148,6 +1148,7 @@ def main():
     parser.add_argument("--final", type=bool, default=False, help="is final run?")
     parser.add_argument("--special", type=str, default=False, help="extra")
     parser.add_argument("--have_subset", type=bool, default=False, help="if dataset is subsets")
+    parser.add_argument("--dataSize", type=int, default=None, help="if dataset is subsets")
     
     parser.add_argument("--num_subset", type=int, default=None, help="number of subset if have any")
     parser.add_argument("--current_subset", type=int, default=None, help="current subset that the model is training on")
@@ -1304,6 +1305,7 @@ def main():
     if args.do_train:
         if args.have_subset:
             args.data_folder = args.data_dir
+            args.num_subset = args.dataSize//100000
             for step in range(args.num_subset):
                 print("train on subset %d"%step)
                 args.current_subset = step
