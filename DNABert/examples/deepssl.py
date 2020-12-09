@@ -829,7 +829,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
     if evaluate==False and args.have_subset:
-        sub_foler_name = args.data_folder.split("/")[0]
+        sub_foler_name = args.data_folder.split("/")[-1]
         args.data_dir = os.path.join(args.data_folder,"{}_{}".format(
             sub_foler_name,args.current_subset))
     if evaluate==True and args.have_subset:

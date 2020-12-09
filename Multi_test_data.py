@@ -2,7 +2,9 @@
 #val3 train 1000, test 1000
 #val4 train 10,000, test 1000
 #val5 train 100,000, test 1000
-#val6 train 1,000,000, test 1000
+
+#With subset
+#val7 train 1,000,000, test 1000
 import sys
 import h5py
 import numpy as np
@@ -10,6 +12,7 @@ from scipy.io import loadmat
 import os
 
 numOfData = 1000000
+val = 7
 
 def load_files(train_file, test_file):
     print("loading training data")
@@ -88,17 +91,17 @@ for k in ks:
         num_subset = numOfData/100000
     
     for i in range(num_subset):
-        train_file_path = './DNABert/examples/DeepSea_data/%s_val6/%s_val6_%s/train.tsv'%(str(k),str(k),str(i))
+        train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_va{}_{}/train.tsv'.format(str(k),str(val),str(k),str(val),str(i))
         if not os.path.exists(train_file_path):
             print("create folder for saving")
             os.makedirs(train_file_path)
-        print("starting training %d-mers"%k)
+        print("starting training {}-mers".format(k))
         start = i*100000
         end = (i+1)*100000
         train_kmers = get_kmers(train_inputs[start:end], train_labels[start:end], dna_dict, k)
         np.savetxt(train_file_path, train_kmers, fmt='%s', delimiter='\t')
 
-    print("starting testing %d-mers"%k)
+    print("starting testing {}-mers".format(k))
     test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-    np.savetxt('./DNABert/examples/DeepSea_data/%s_val6/test/dev.tsv'%(str(k),str(k),str(i)), test_kmers, fmt='%s', delimiter='\t')
+    np.savetxt('./DNABert/examples/DeepSea_data/{}_val{}/test/dev.tsv'.format(str(k),str(val)), test_kmers, fmt='%s', delimiter='\t')
         
