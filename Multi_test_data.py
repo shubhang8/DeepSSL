@@ -82,7 +82,7 @@ dna_dict = {
 k = 3
 print("k = 3")
 
-ks = [3,4,5,6]
+ks = [4,5,6]
 
 for k in ks:
     num_subset = 1
@@ -98,7 +98,7 @@ for k in ks:
     np.savetxt('./DNABert/examples/DeepSea_data/{}_val{}/test/dev.tsv'.format(str(k),str(val)), test_kmers, fmt='%s', delimiter='\t')
     
     for i in range(int(num_subset)):
-        train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_va{}_{}'.format(str(k),str(val),str(k),str(val),str(i))
+        train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_val{}_{}'.format(str(k),str(val),str(k),str(val),str(i))
         if not os.path.exists(train_file_path):
             os.makedirs(train_file_path)
         print("train step, ",i)
