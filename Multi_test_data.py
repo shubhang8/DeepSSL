@@ -89,13 +89,14 @@ for k in ks:
     
     if numOfData > 100000:
         num_subset = numOfData//100000
+    print("starting training {}-mers".format(k))
     
-    for i in range(int(num_subset):
+    for i in range(int(num_subset)):
         train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_va{}_{}'.format(str(k),str(val),str(k),str(val),str(i))
         if not os.path.exists(train_file_path):
-            print("create folder for saving")
+            #print("create folder for saving")
             os.makedirs(train_file_path)
-        print("starting training {}-mers".format(k))
+        print("train step, ",i)
         start = i*100000
         end = (i+1)*100000
         train_kmers = get_kmers(train_inputs[start:end], train_labels[start:end], dna_dict, k)
