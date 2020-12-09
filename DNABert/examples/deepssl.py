@@ -828,6 +828,13 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
+    if evaluate==False and args.have_subset:
+        sub_foler_name = args.data_folder.split("/")[0]
+        args.data_dir = os.path.join(args.data_folder,"{}_{}".format(
+            sub_foler_name,args.current_subset))
+    if evaluate==True and args.have_subset:
+        args.data_dir = args.data_folder
+    
     cached_features_file = os.path.join(
         args.data_dir,
         "cached_{}_{}_{}_{}".format(
@@ -837,6 +844,9 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             str(task),
         ),
     )
+    
+
+
     if args.do_predict:
         cached_features_file = os.path.join(
         args.data_dir,
@@ -1135,6 +1145,10 @@ def main():
     parser.add_argument("--k", type=str, default=None, help="k value")
     parser.add_argument("--final", type=bool, default=False, help="is final run?")
     parser.add_argument("--special", type=str, default=False, help="extra")
+    parser.add_argument("--have_subset", type=bool, default=False, help="if dataset is subsets")
+    parser.add_argument("--num_subset", type=int, default=None, help="number of subset if have any")
+    parser.add_argument("--current_subset", type=int, default=None, help="current subset that the model is training on")
+    parser.add_argument("--data_folder", type=str, default=None, help="current subset that the model is training on")
     
     args = parser.parse_args()
 
@@ -1284,9 +1298,18 @@ def main():
     # Training
     print("here5")
     if args.do_train:
-        train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-        train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
-        print("finish training")
+        if args.have_subset:
+            args.data_folder = args.data_dir
+            for step in range(args.num_subset):
+                print("train on subset %d"%step)
+                args.current_subset = step
+                train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
+                train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
+                print("finish training")
+        else:
+            train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
+            train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
+            print("finish training")
         #logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
