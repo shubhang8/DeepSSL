@@ -88,10 +88,10 @@ for k in ks:
     num_subset = 1
     
     if numOfData > 100000:
-        num_subset = numOfData/100000
+        num_subset = numOfData//100000
     
-    for i in range(num_subset):
-        train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_va{}_{}/train.tsv'.format(str(k),str(val),str(k),str(val),str(i))
+    for i in range(int(num_subset):
+        train_file_path = './DNABert/examples/DeepSea_data/{}_val{}/{}_va{}_{}'.format(str(k),str(val),str(k),str(val),str(i))
         if not os.path.exists(train_file_path):
             print("create folder for saving")
             os.makedirs(train_file_path)
@@ -99,7 +99,7 @@ for k in ks:
         start = i*100000
         end = (i+1)*100000
         train_kmers = get_kmers(train_inputs[start:end], train_labels[start:end], dna_dict, k)
-        np.savetxt(train_file_path, train_kmers, fmt='%s', delimiter='\t')
+        np.savetxt("{}/train.tsv".format(train_file_path), train_kmers, fmt='%s', delimiter='\t')
 
     print("starting testing {}-mers".format(k))
     test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
