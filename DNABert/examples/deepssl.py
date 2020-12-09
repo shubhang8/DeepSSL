@@ -829,6 +829,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
     if evaluate==False and args.have_subset:
+        print("")
         sub_foler_name = args.data_folder.split("/")[-1]
         args.data_dir = os.path.join(args.data_folder,"{}_{}".format(
             sub_foler_name,args.current_subset))
@@ -1147,6 +1148,7 @@ def main():
     parser.add_argument("--final", type=bool, default=False, help="is final run?")
     parser.add_argument("--special", type=str, default=False, help="extra")
     parser.add_argument("--have_subset", type=bool, default=False, help="if dataset is subsets")
+    
     parser.add_argument("--num_subset", type=int, default=None, help="number of subset if have any")
     parser.add_argument("--current_subset", type=int, default=None, help="current subset that the model is training on")
     parser.add_argument("--data_folder", type=str, default=None, help="current subset that the model is training on")
