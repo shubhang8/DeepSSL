@@ -1,7 +1,8 @@
 
 #val3 train 1000, test 1000
-#val4 train 10000, test 1000
-#val5 train 100000, test 1000
+#val4 train 10,000, test 1000
+#val5 train 100,000, test 1000
+#val5 train 1,000,000, test 1000
 import sys
 import h5py
 import numpy as np
@@ -11,12 +12,12 @@ def load_files(train_file, test_file):
     print("loading training data")
     with h5py.File(train_file, 'r') as train_data:
         train_labels = np.transpose(train_data['traindata'], (1, 0))
-        train_labels = train_labels[0:100000]
+        train_labels = train_labels[0:1000000]
         # print(train_labels.shape)
 
         traindata = train_data['trainxdata']
-        train_inputs = np.empty((100000, 1000), dtype=np.float32)
-        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:100000], axis=1))
+        train_inputs = np.empty((1000000, 1000), dtype=np.float32)
+        train_inputs = np.transpose(np.argmax(traindata[:, :, 0:1000000], axis=1))
         # print(train_inputs.shape)
 
     print("loading testing data")
