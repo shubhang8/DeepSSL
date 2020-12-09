@@ -93,6 +93,8 @@ for k in ks:
 
     print("starting testing {}-mers".format(k))
     test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
+    if not os.path.exists('./DNABert/examples/DeepSea_data/{}_val{}/test'.format(str(k),str(val))):
+            os.makedirs('./DNABert/examples/DeepSea_data/{}_val{}/test'.format(str(k),str(val)))
     np.savetxt('./DNABert/examples/DeepSea_data/{}_val{}/test/dev.tsv'.format(str(k),str(val)), test_kmers, fmt='%s', delimiter='\t')
     
     for i in range(int(num_subset)):
