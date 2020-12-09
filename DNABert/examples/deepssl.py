@@ -846,7 +846,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     )
     
 
-
+    print("cached file: ",cached_features_file)
     if args.do_predict:
         cached_features_file = os.path.join(
         args.data_dir,
