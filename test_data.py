@@ -2,7 +2,7 @@
 #val3 train 1000, test 1000
 #val4 train 10,000, test 1000
 #val5 train 100,000, test 1000
-#val5 train 1,000,000, test 1000
+#val6 train 1,000,000, test 1000
 import sys
 import h5py
 import numpy as np
@@ -81,7 +81,7 @@ ks = [3,4,5,6]
 for k in ks:
     print("starting testing %d-mers"%k)
     test_kmers = get_kmers(test_inputs, test_labels, dna_dict, k)
-    np.savetxt('./DNABert/examples/DeepSea_data/%s_val5/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_val6/dev.tsv'%str(k), test_kmers, fmt='%s', delimiter='\t')
     print("starting training %d-mers"%k)
     train_kmers = get_kmers(train_inputs, train_labels, dna_dict, k)
-    np.savetxt('./DNABert/examples/DeepSea_data/%s_val5/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
+    np.savetxt('./DNABert/examples/DeepSea_data/%s_val6/train.tsv'%str(k), train_kmers, fmt='%s', delimiter='\t')
