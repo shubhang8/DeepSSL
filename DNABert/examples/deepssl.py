@@ -52,7 +52,7 @@ import torch.nn.functional as F
 
 from torch.optim import Adam
 
-from DNABert.src.transformers import (
+from DeepSSL.DNABert.src.transformers import (
     WEIGHTS_NAME,
     AdamW,
     AlbertConfig,
