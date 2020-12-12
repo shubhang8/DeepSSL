@@ -52,7 +52,7 @@ import torch.nn.functional as F
 
 from torch.optim import Adam
 
-from transformers import (
+from DNABert.src.transformers import (
     WEIGHTS_NAME,
     AdamW,
     AlbertConfig,
@@ -134,8 +134,8 @@ MODEL_CLASSES = {
     "xlmroberta": (XLMRobertaConfig, XLMRobertaForSequenceClassification, XLMRobertaTokenizer),
     "flaubert": (FlaubertConfig, FlaubertForSequenceClassification, FlaubertTokenizer),
 }
-                    
-TOKEN_ID_GROUP = ["bert", "dnalong", "dnalongcat", "xlnet", "albert"] 
+
+TOKEN_ID_GROUP = ["bert", "dnalong", "dnalongcat", "xlnet", "albert"]
 
 def set_seed(args):
     random.seed(args.seed)
@@ -300,7 +300,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
             #print("input data shape: ",batch[0].shape)
             inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
-            
+
             if args.model_type != "distilbert":
                 inputs["token_type_ids"] = (
                     batch[2] if args.model_type in TOKEN_ID_GROUP else None
@@ -312,27 +312,27 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
             logits = outputs[1]
             hidden_states = outputs[2]
-            
+
             last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
             # print("last hidden shape: ",last_hidden_state.shape)
-            
+
             # print("hidden_states[0].shape:",hidden_states[0].shape)
             # print("hidden_states[1].shape:",hidden_states[1].shape)
             # print("hidden_states[2].shape:",hidden_states[2].shape)
             # print("hidden_states[-1].shape:",hidden_states[-1].shape)
-            
+
 
             CLS_hidden_state = last_hidden_state[:,0,:] #(batch, hiddens_size)
             #print("CLS_hidden_state shape: ",CLS_hidden_state.shape)
 
             kmer_hidden_states = last_hidden_state[:,1:,:] #(batch_size,seq_size-1,hidden_size)
             #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
-            
+
             deepsea_labels = batch[4] # batch * 919 tensor float
 
             #kmer classification
 
-           
+
             if kmerClassifier:
                 kmer_output = kmerClassifier(kmer_hidden_states)
                 l = loss_fn(kmer_output, deepsea_labels.float())
@@ -348,7 +348,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = kmer_output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
-                #results = np.where(results<0.5,) 
+                #results = np.where(results<0.5,)
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
@@ -367,7 +367,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 results = cls_output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
-                #results = np.where(results<0.5,0) 
+                #results = np.where(results<0.5,0)
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))
@@ -389,7 +389,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             evaluate(args,model, tokenizer,kmerClassifier = kmerClassifier)
         if clsClassifier:
             evaluate(args,model, tokenizer, clsClassifier = clsClassifier)
-         
+
 
 
 
@@ -399,7 +399,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     #eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
     if args.task_name[:3] == "dna":
         softmax = torch.nn.Softmax(dim=1)
-        
+
 
     results = {}
     eval_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=evaluate)
@@ -441,9 +441,9 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             #         batch[2] if args.model_type in TOKEN_ID_GROUP else None
             #     )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
             outputs = model(**inputs)
-            
+
             hidden_states = outputs[2]
-        
+
             last_hidden_state = hidden_states[-2] #(batch_size,seq_size,hidden_size) (1,1000,768)
             #print("last_hidden_state shape: ",last_hidden_state.shape)
             CLS_hidden_state = last_hidden_state[:,0,:] #(batch, hiddens_size)
@@ -454,7 +454,7 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
             deepsea_labels = batch[4] # batch * 919 tensor float
 
 
-            
+
             if kmerClassifier:
                 output = kmerClassifier(kmer_hidden_states)
                 l = loss_fn(output, deepsea_labels.float())
@@ -466,14 +466,14 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
                 all_output += results
                 all_labels += deepsea_labels.flatten()
-                
+
 
                 results = np.where(results>=0.5,1,0)
 
                 results_to_save = results.tolist()
 
                 all_predict += results_to_save
-                #results = np.where(results<0.5,) 
+                #results = np.where(results<0.5,)
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
@@ -488,14 +488,14 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
                 all_output += results
                 all_labels += deepsea_labels.flatten()
-                
+
 
                 results = np.where(results>=0.5,1,0)
 
                 results_to_save = results.tolist()
 
                 all_predict += results_to_save
-                #results = np.where(results<0.5,) 
+                #results = np.where(results<0.5,)
                 results = torch.from_numpy(results)
                 targets = deepsea_labels.flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
@@ -513,9 +513,9 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
     #prepare for AUROC
     minVal = min(results)
-    maxVal = max(results)      
+    maxVal = max(results)
 
-    #scale results to [0,1]     
+    #scale results to [0,1]
     scaledResults = [((value - minVal)/(maxVal - minVal)) for value in all_output]
     print("Calculate metrics")
 
@@ -561,8 +561,8 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
 
 
 
-                
-                
+
+
 
     #             eval_loss += tmp_eval_loss.mean().item()
     #         nb_eval_steps += 1
@@ -592,10 +592,10 @@ def evaluate(args, model, tokenizer, kmerClassifier = None, clsClassifier = None
     #     else:
     #         result = compute_metrics(eval_task, preds, out_label_ids, probs)
     #     results.update(result)
-        
+
     #     if args.task_name == "dna690":
     #         eval_output_dir = args.result_dir
-    #         if not os.path.exists(args.result_dir): 
+    #         if not os.path.exists(args.result_dir):
     #             os.makedirs(args.result_dir)
     #     output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
     #     with open(output_eval_file, "a") as writer:
@@ -686,7 +686,7 @@ def predict(args, model, tokenizer, prefix=""):
             result = compute_metrics(pred_task, preds, out_label_ids, probs[:,1])
         else:
             result = compute_metrics(pred_task, preds, out_label_ids, probs)
-        
+
         pred_output_dir = args.predict_dir
         if not os.path.exists(pred_output_dir):
                os.makedir(pred_output_dir)
@@ -716,7 +716,7 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
     if not os.path.exists(args.predict_dir):
         os.makedirs(args.predict_dir)
     softmax = torch.nn.Softmax(dim=1)
-    
+
 
     for pred_task, pred_output_dir in zip(pred_task_names, pred_outputs_dirs):
         '''
@@ -725,8 +725,8 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
         else:
             args.data_dir = deepcopy(args.visualize_data_dir).replace("/690", "/690/" + str(kmer))
         '''
-            
-            
+
+
         evaluate = False if args.visualize_train else True
         pred_dataset = load_and_cache_examples(args, pred_task, tokenizer, evaluate=evaluate)
 
@@ -754,7 +754,7 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
         else:
             preds = np.zeros([len(pred_dataset),3])
         attention_scores = np.zeros([len(pred_dataset), 12, args.max_seq_length, args.max_seq_length])
-        
+
         for index, batch in enumerate(tqdm(pred_dataloader, desc="Predicting")):
             model.eval()
             batch = tuple(t.to(args.device) for t in batch)
@@ -769,7 +769,7 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
                 attention = outputs[-1][-1]
                 _, logits = outputs[:2]
 
-                
+
                 preds[index*batch_size:index*batch_size+len(batch[0]),:] = logits.detach().cpu().numpy()
                 attention_scores[index*batch_size:index*batch_size+len(batch[0]),:,:,:] = attention.cpu().numpy()
                 # if preds is None:
@@ -781,7 +781,7 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
                 #     attention_scores = np.concatenate((attention_scores, attention.cpu().numpy()), 0)
                 # else:
                 #     attention_scores = attention.cpu().numpy()
-        
+
         if args.task_name != "dnasplice":
             probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
         else:
@@ -799,7 +799,7 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
                     attn_score[i] = 0
                     break
 
-            # attn_score[0] = 0    
+            # attn_score[0] = 0
             counts = np.zeros([len(attn_score)+kmer-1])
             real_scores = np.zeros([len(attn_score)+kmer-1])
             for i, score in enumerate(attn_score):
@@ -808,14 +808,14 @@ def visualize(args, model, tokenizer, kmer, prefix=""):
                     real_scores[i+j] += score
             real_scores = real_scores / counts
             real_scores = real_scores / np.linalg.norm(real_scores)
-            
-        
+
+
             # print(index)
             # print(real_scores)
             # print(len(real_scores))
 
             scores[index] = real_scores
-        
+
 
     return scores, probs
 
@@ -835,7 +835,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             sub_foler_name,args.current_subset))
     if evaluate==True and args.have_subset:
         args.data_dir = os.path.join(args.data_folder,"test")
-    
+
     cached_features_file = os.path.join(
         args.data_dir,
         "cached_{}_{}_{}_{}".format(
@@ -845,7 +845,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             str(task),
         ),
     )
-    
+
 
     print("cached file: ",cached_features_file)
     if args.do_predict:
@@ -869,9 +869,9 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             label_list[1], label_list[2] = label_list[2], label_list[1]
         examples = (
             processor.get_dev_examples(args.data_dir) if evaluate else processor.get_train_examples(args.data_dir)
-        )   
+        )
 
-        
+
         print("finish loading examples")
 
         # params for convert_examples_to_features
@@ -891,7 +891,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             pad_on_left=pad_on_left,  # pad on the left for xlnet
             pad_token=pad_token,
             pad_token_segment_id=pad_token_segment_id,)
-                
+
         else:
             n_proc = int(args.n_process)
             if evaluate:
@@ -905,20 +905,20 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
                     indexes.append(len_slice*(i))
                 else:
                     indexes.append(len(examples))
-           
+
             results = []
-            
+
             for i in range(n_proc):
                 results.append(p.apply_async(convert_examples_to_features, args=(examples[indexes[i]:indexes[i+1]], tokenizer, max_length, None, label_list, output_mode, pad_on_left, pad_token, pad_token_segment_id, True,  )))
                 print(str(i+1) + ' processor started !')
-            
+
             p.close()
             p.join()
 
             features = []
             for result in results:
                 features.extend(result.get())
-                    
+
 
         if args.local_rank in [-1, 0]:
             logger.info("Saving features into cached file %s", cached_features_file)
@@ -993,8 +993,8 @@ def main():
         required=True,
         help="The output directory where the model predictions and checkpoints will be written.",
     )
-    
-    
+
+
     # Other parameters
     parser.add_argument(
         "--visualize_data_dir",
@@ -1149,11 +1149,11 @@ def main():
     parser.add_argument("--special", type=str, default=False, help="extra")
     parser.add_argument("--have_subset", type=bool, default=False, help="if dataset is subsets")
     parser.add_argument("--dataSize", type=int, default=None, help="if dataset is subsets")
-    
+
     parser.add_argument("--num_subset", type=int, default=None, help="number of subset if have any")
     parser.add_argument("--current_subset", type=int, default=None, help="current subset that the model is training on")
     parser.add_argument("--data_folder", type=str, default=None, help="current subset that the model is training on")
-    
+
     args = parser.parse_args()
 
     if args.should_continue:
@@ -1240,7 +1240,7 @@ def main():
     # Load pretrained model and tokenizer
     if args.local_rank not in [-1, 0]:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
-    
+
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     print("here4")
@@ -1251,7 +1251,7 @@ def main():
             finetuning_task=args.task_name,
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
-        
+
         config.hidden_dropout_prob = args.hidden_dropout_prob
         config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
         if args.model_type in ["dnalong", "dnalongcat"]:
@@ -1277,7 +1277,7 @@ def main():
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
 
-        
+
 
 
         if args.local_rank == 0:
@@ -1388,7 +1388,7 @@ def main():
             output_dir = args.output_dir.replace("/690", "/690/" + str(kmer))
             #checkpoint_name = os.listdir(output_dir)[0]
             #output_dir = os.path.join(output_dir, checkpoint_name)
-            
+
             tokenizer = tokenizer_class.from_pretrained(
                 "dna"+str(kmer),
                 do_lower_case=args.do_lower_case,
@@ -1469,11 +1469,11 @@ def main():
                 all_probs += probs
                 cat_probs = np.concatenate((cat_probs, probs), axis=1)
             print(cat_probs[0])
-        
+
 
         all_probs = all_probs / 4.0
         all_preds = np.argmax(all_probs, axis=1)
-        
+
         # save label and data for stuck ensemble
         labels = np.array(out_label_ids)
         labels = labels.reshape(labels.shape[0],1)
@@ -1494,10 +1494,10 @@ def main():
         ensemble_results = compute_metrics(eval_task, all_preds, out_label_ids, all_probs[:,1])
         logger.info("***** Ensemble results {} *****".format(prefix))
         for key in sorted(ensemble_results.keys()):
-            logger.info("  %s = %s", key, str(ensemble_results[key]))    
+            logger.info("  %s = %s", key, str(ensemble_results[key]))
 
 
-            
+
 
 
     return results
