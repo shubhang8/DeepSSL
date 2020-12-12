@@ -1,5 +1,4 @@
 import sys
-print(sys.path)
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -52,7 +51,7 @@ import torch.nn.functional as F
 
 from torch.optim import Adam
 
-from transformers import (
+from DNABert.src.transformers import (
     WEIGHTS_NAME,
     AdamW,
     AlbertConfig,
