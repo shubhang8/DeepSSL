@@ -1,5 +1,5 @@
 import sys
-print(sys.path)
+print(sys.path[0])
 sys.path.insert(0,'/home/shubhang_kandiraju/DeepSSL/DNABert/src/transformers')
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
