@@ -1,5 +1,6 @@
 import sys
 print(sys.path)
+sys.path.insert(0,'/home/shubhang_kandiraju/DeepSSL/DNABert/src/transformers')
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
@@ -52,7 +53,7 @@ import torch.nn.functional as F
 
 from torch.optim import Adam
 
-from src.transformers import (
+from transformers import (
     WEIGHTS_NAME,
     AdamW,
     AlbertConfig,
@@ -84,10 +85,10 @@ from src.transformers import (
     XLNetTokenizer,
     get_linear_schedule_with_warmup,
 )
-from src.transformers import glue_compute_metrics as compute_metrics
-from src.transformers import glue_convert_examples_to_features as convert_examples_to_features
-from src.transformers import glue_output_modes as output_modes
-from src.transformers import glue_processors as processors
+from transformers import glue_compute_metrics as compute_metrics
+from transformers import glue_convert_examples_to_features as convert_examples_to_features
+from transformers import glue_output_modes as output_modes
+from transformers import glue_processors as processors
 
 
 try:
