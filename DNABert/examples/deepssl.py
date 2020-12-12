@@ -51,7 +51,7 @@ import torch.nn.functional as F
 
 from torch.optim import Adam
 
-from DNABert.src.transformers import (
+from transformers import (
     WEIGHTS_NAME,
     AdamW,
     AlbertConfig,
