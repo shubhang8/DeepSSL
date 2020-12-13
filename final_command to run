@@ -71,7 +71,7 @@ python deepssl.py \
     --deepSeaClassifier $TASK \
     --metric $MET \
     --k $KMER \
-    --special TEST
+    --special TEST30
 
 
 =========================================
