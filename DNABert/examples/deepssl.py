@@ -327,7 +327,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             kmer_hidden_states = last_hidden_state[:,1:,:] #(batch_size,seq_size-1,hidden_size)
             #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
 
-            deepsea_labels = batch[4] # batch * 919 tensor float
+            deepsea_labels = batch[4][:,0] # batch * 919 tensor float
 
             #kmer classification
 
@@ -344,6 +344,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 #print(deepsea_labels.flatten())
                 #print(kmer_output.flatten())
 
+                kmer_output = kmer_output[:,0] #first 690 correspond to motifs
                 results = kmer_output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
@@ -362,6 +363,8 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 l.backward()
                 optimizer.step()
                 classifier_optimizer.step()
+
+                cls_output = cls_output[:,0]
 
                 results = cls_output.flatten()
                 results = results.cpu()
