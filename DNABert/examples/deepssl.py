@@ -334,7 +334,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
             if kmerClassifier:
                 kmer_output = kmerClassifier(kmer_hidden_states)
-                l = loss_fn(kmer_output[:,0], deepsea_labels.float()[:,0])
+                l = loss_fn(kmer_output[:,0], deepsea_labels[;,0].float())
                 #print("loss: ",l)
                 optimizer.zero_grad()
                 classifier_optimizer.zero_grad()
@@ -357,7 +357,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             if clsClassifier:
                 cls_output = clsClassifier(CLS_hidden_state)
                 #print("cls output: ",cls_output)
-                l = loss_fn(cls_output, deepsea_labels.float())
+                l = loss_fn(cls_output[:,0], deepsea_labels[:,0].float())
                 optimizer.zero_grad()
                 classifier_optimizer.zero_grad()
                 l.backward()
@@ -1312,11 +1312,11 @@ def main():
                 print("train on subset %d"%step)
                 args.current_subset = step
                 train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-                train(args, train_dataset, model, tokenizer , kmerClassifier[:,0], clsClassifier[:,0])
+                train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
                 print("finish training")
         else:
             train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-            train(args, train_dataset, model, tokenizer , kmerClassifier[:,0], clsClassifier[:,0])
+            train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
             print("finish training")
         #logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
