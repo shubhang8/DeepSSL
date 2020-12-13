@@ -327,7 +327,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
             kmer_hidden_states = last_hidden_state[:,1:,:] #(batch_size,seq_size-1,hidden_size)
             #print("kmer_hidden_states shape: ",kmer_hidden_states.shape)
 
-            deepsea_labels = batch[4][:,0] # batch * 919 tensor float
+            deepsea_labels = batch[4] # batch * 919 tensor float
 
             #kmer classification
 
