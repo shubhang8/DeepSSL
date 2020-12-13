@@ -334,7 +334,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
             if kmerClassifier:
                 kmer_output = kmerClassifier(kmer_hidden_states)
-                l = loss_fn(kmer_output, deepsea_labels.float())
+                l = loss_fn(kmer_output[:,0], deepsea_labels.float()[:,0])
                 #print("loss: ",l)
                 optimizer.zero_grad()
                 classifier_optimizer.zero_grad()
