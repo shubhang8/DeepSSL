@@ -334,9 +334,9 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
 
             if kmerClassifier:
                 kmer_output = kmerClassifier(kmer_hidden_states)
-                print("KMER output Shape = ", kmer_output.shape)
-                print("KMER spliced Shape = ", kmer_output[:,0].shape)
-                print("DeepSea Labels spliced Shape = ", deepsea_labels[:,0].shape)
+                #print("KMER output Shape = ", kmer_output.shape)
+                #print("KMER spliced Shape = ", kmer_output[:,0].shape)
+                #print("DeepSea Labels spliced Shape = ", deepsea_labels[:,0].shape)
                 l = loss_fn(kmer_output[:,692], deepsea_labels[:,692].float())
                 #print("loss: ",l)
                 optimizer.zero_grad()
