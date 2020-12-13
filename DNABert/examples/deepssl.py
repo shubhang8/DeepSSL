@@ -337,7 +337,7 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 print("KMER output Shape = ", kmer_output.shape)
                 print("KMER spliced Shape = ", kmer_output[:,0].shape)
                 print("DeepSea Labels spliced Shape = ", deepsea_labels[:,0].shape)
-                l = loss_fn(kmer_output[:,0], deepsea_labels[:,0].float())
+                l = loss_fn(kmer_output[:,692], deepsea_labels[:,692].float())
                 #print("loss: ",l)
                 optimizer.zero_grad()
                 classifier_optimizer.zero_grad()
@@ -347,34 +347,34 @@ def train(args, train_dataset, model, tokenizer, kmerClassifier = None, clsClass
                 #print(deepsea_labels.flatten())
                 #print(kmer_output.flatten())
 
-                kmer_output = kmer_output[:,0] #first 690 correspond to motifs
+                kmer_output = kmer_output[:,692] #first 690 correspond to motifs
                 results = kmer_output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,)
                 results = torch.from_numpy(results)
-                targets = deepsea_labels[:,0].flatten().cpu()
+                targets = deepsea_labels[:,692].flatten().cpu()
                 accuracy = sum(targets.eq(results))/len(targets)
                 #print("accu: ",accuracy)
 
             if clsClassifier:
                 cls_output = clsClassifier(CLS_hidden_state)
                 #print("cls output: ",cls_output)
-                l = loss_fn(cls_output[:,0], deepsea_labels[:,0].float())
+                l = loss_fn(cls_output[:,692], deepsea_labels[:,692].float())
                 optimizer.zero_grad()
                 classifier_optimizer.zero_grad()
                 l.backward()
                 optimizer.step()
                 classifier_optimizer.step()
 
-                cls_output = cls_output[:,0]
+                cls_output = cls_output[:,692]
 
                 results = cls_output.flatten()
                 results = results.cpu()
                 results = np.where(results>=0.5,1,0)
                 #results = np.where(results<0.5,0)
                 results = torch.from_numpy(results)
-                targets = deepsea_labels[:,0].flatten().cpu()
+                targets = deepsea_labels[:,692].flatten().cpu()
                 accuracy = sum(targets.eq(results))
                 #print("accu: ",accuracy)
 
