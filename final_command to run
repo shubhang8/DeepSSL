@@ -58,7 +58,7 @@ python deepssl.py \
     --per_gpu_eval_batch_size=10 \
     --per_gpu_train_batch_size=10  \
     --learning_rate 2e-4 \
-    --num_train_epochs 1 \
+    --num_train_epochs 10 \
     --output_dir $OUTPUT_PATH \
     --evaluate_during_training \
     --logging_steps 100 \
@@ -70,7 +70,8 @@ python deepssl.py \
     --n_process 1 \
     --deepSeaClassifier $TASK \
     --metric $MET \
-    --k $KMER
+    --k $KMER \
+    --special TEST30
 
 
 =========================================
