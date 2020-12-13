@@ -1312,11 +1312,11 @@ def main():
                 print("train on subset %d"%step)
                 args.current_subset = step
                 train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-                train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
+                train(args, train_dataset, model, tokenizer , kmerClassifier[:,0], clsClassifier[:,0])
                 print("finish training")
         else:
             train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
-            train(args, train_dataset, model, tokenizer , kmerClassifier, clsClassifier)
+            train(args, train_dataset, model, tokenizer , kmerClassifier[:,0], clsClassifier[:,0])
             print("finish training")
         #logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
 
